@@ -725,13 +725,33 @@
       try { await audioEl.play(); } catch {}
     });
 
-    // ── Background ─────────────────────────────────────────
-    (function setBackground() {
-      const bgs = [
-        "./backrgounds/Background7.png",
-      ];
-      const pick = bgs[Math.floor(Math.random() * bgs.length)];
-      document.body.style.backgroundImage = `url('${pick}')`;
+    // ── Background (auto-detects all images in backrgounds/) ──
+    (async function setBackground() {
+      // Try all possible background filenames.
+      // Add new images as Background8.jpg, Background9.png, etc.
+      // Supports .png, .jpg, .jpeg — any that exist will be used.
+      const candidates = [];
+      for (let i = 1; i <= 20; i++) {
+        candidates.push(`./backrgounds/Background${i}.png`);
+        candidates.push(`./backrgounds/Background${i}.jpg`);
+        candidates.push(`./backrgounds/Background${i}.jpeg`);
+      }
+      candidates.push("./backrgounds/Background.png");
+      candidates.push("./backrgounds/Background.jpg");
+
+      // Check which files actually exist (fast HEAD requests)
+      const checks = candidates.map(url =>
+        fetch(url, { method: "HEAD" })
+          .then(r => r.ok ? url : null)
+          .catch(() => null)
+      );
+      const results = await Promise.all(checks);
+      const available = results.filter(Boolean);
+
+      if (available.length > 0) {
+        const pick = available[Math.floor(Math.random() * available.length)];
+        document.body.style.backgroundImage = `url('${pick}')`;
+      }
     })();
 
     // ── Init ────────────────────────────────────────────────
