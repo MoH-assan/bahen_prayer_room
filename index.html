@@ -760,7 +760,7 @@
       return dt;
     }
 
-    function computeNext() {
+    function computeNext(skipAtOrBeforeMillis = null) {
       const n = now();
       const events = [];
 
@@ -769,10 +769,18 @@
         const iqamaHHMM = IQAMA_TIMES[prayer];
 
         if (chkAdhan.checked && isValidHHMM(adhanHHMM)) {
-          events.push({ prayer, type: "adhan", dt: eventDateTime(adhanHHMM, n) });
+          let dt = eventDateTime(adhanHHMM, n);
+          if (skipAtOrBeforeMillis !== null && dt.toMillis() <= skipAtOrBeforeMillis) {
+            dt = dt.plus({ days: 1 });
+          }
+          events.push({ prayer, type: "adhan", dt });
         }
         if (chkIqama.checked && isValidHHMM(iqamaHHMM)) {
-          events.push({ prayer, type: "iqama", dt: eventDateTime(iqamaHHMM, n) });
+          let dt = eventDateTime(iqamaHHMM, n);
+          if (skipAtOrBeforeMillis !== null && dt.toMillis() <= skipAtOrBeforeMillis) {
+            dt = dt.plus({ days: 1 });
+          }
+          events.push({ prayer, type: "iqama", dt });
         }
       });
 
@@ -852,10 +860,11 @@
       const diff = (now().toMillis() - nextEvent.dt.toMillis()) / 1000;
       if (diff > GRACE_SEC) {
         // Skip stale event and continue to upcoming events.
-        scheduleNext();
+        scheduleNext(nextEvent.dt);
         return;
       }
       if (diff >= 0 && diff <= GRACE_SEC) {
+        const firedDt = nextEvent.dt;
         nextEvent.fired = true;
         try {
           await playEvent(nextEvent);
@@ -865,13 +874,14 @@
           setStickyStatus(`<span class="status-stopped">&#9679;</span> ${audioErrorMessage(err)} Ensure this tab is not muted.`);
           console.warn("Scheduled audio playback failed:", err);
           return;
-        } finally { scheduleNext(); }
+        } finally { scheduleNext(firedDt); }
       }
     }
 
-    function scheduleNext() {
+    function scheduleNext(skipAtOrBeforeDt = null) {
       clearTimers();
-      nextEvent = computeNext();
+      const skipAtOrBeforeMillis = skipAtOrBeforeDt ? skipAtOrBeforeDt.toMillis() : null;
+      nextEvent = computeNext(skipAtOrBeforeMillis);
       updateUI();
       if (!nextEvent) {
         if (running && hasSelectedReminderType()) {
