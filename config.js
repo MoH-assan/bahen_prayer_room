@@ -40,10 +40,11 @@ const CONFIG = {
   maghribOffsetMinutes: 5,
 
   // ── Audio ─────────────────────────────────────────────────
-  // "default" plays for full iqama, "short" for short notification mode.
+  // "adhan" for full adhan, "iqama" for iqama, "short" for brief notification.
   audio: {
-    default: "./eqamah.mp3",
-    short:   "./short.mp3",
+    adhan: "./adhan.mp3",
+    iqama: "./eqamah.mp3",
+    short: "./short.mp3",
   },
 
   // ── Daily Aya ─────────────────────────────────────────────

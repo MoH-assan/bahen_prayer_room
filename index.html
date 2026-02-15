@@ -149,17 +149,19 @@
 
     .toggle-row label { cursor: pointer; user-select: none; }
 
-    /* Toggle switch */
-    .switch           { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
-    .switch input     { opacity: 0; width: 0; height: 0; }
-    .toggle-slider    { position: absolute; cursor: pointer; inset: 0;
-                        background: #ccc; border-radius: 24px; transition: 0.3s; }
-    .toggle-slider::before {
-      content: ""; position: absolute; height: 18px; width: 18px;
-      left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s;
+    /* Audio mode selector */
+    .audio-mode { margin-top: 12px; }
+    .mode-options { display: flex; gap: 8px; flex-wrap: wrap; }
+    .mode-option {
+      cursor: pointer; display: flex; align-items: center; gap: 6px;
+      padding: 8px 16px; border-radius: 10px; border: 1px solid var(--border);
+      font-size: 0.88rem; font-weight: 600; transition: all 0.2s; user-select: none;
     }
-    .switch input:checked + .toggle-slider          { background: var(--accent); }
-    .switch input:checked + .toggle-slider::before   { transform: translateX(20px); }
+    .mode-option:hover { background: #f1f3f5; }
+    .mode-option input { display: none; }
+    .mode-option:has(input:checked) {
+      background: var(--accent); color: #fff; border-color: var(--accent);
+    }
 
     /* Volume slider */
     .volume-row {
@@ -296,12 +298,13 @@
         <button class="btn-primary" id="enableBtn">Enable Audio &amp; Start</button>
         <button class="btn-secondary" id="stopBtn">Stop</button>
       </div>
-      <div class="toggle-row">
-        <label class="switch">
-          <input type="checkbox" id="shortToggle" />
-          <span class="toggle-slider"></span>
-        </label>
-        <label for="shortToggle">Short notification (instead of full iqama)</label>
+      <div class="audio-mode">
+        <label class="muted" style="font-weight:600;margin-bottom:6px;display:block;">Notification sound:</label>
+        <div class="mode-options">
+          <label class="mode-option"><input type="radio" name="audioMode" value="adhan" /><span>Adhan</span></label>
+          <label class="mode-option"><input type="radio" name="audioMode" value="iqama" checked /><span>Iqama</span></label>
+          <label class="mode-option"><input type="radio" name="audioMode" value="short" /><span>Short</span></label>
+        </div>
       </div>
       <div class="volume-row">
         <label for="volumeSlider">Volume</label>
@@ -309,8 +312,9 @@
         <span class="volume-pct" id="volumePct">80%</span>
       </div>
       <div class="controls" style="margin-top:12px;">
+        <button class="btn-secondary" id="testAdhanBtn">&#9835; Test Adhan</button>
+        <button class="btn-secondary" id="testIqamaBtn">&#9835; Test Iqama</button>
         <button class="btn-secondary" id="testShortBtn">&#9835; Test Short</button>
-        <button class="btn-secondary" id="testFullBtn">&#9835; Test Full Iqama</button>
       </div>
       <p id="status">Not running.</p>
       <p id="nextLine"></p>
@@ -434,7 +438,7 @@
     const $ = id => document.getElementById(id);
     const enableBtn   = $("enableBtn");
     const stopBtn     = $("stopBtn");
-    const shortToggle = $("shortToggle");
+    const modeRadios = document.querySelectorAll('input[name="audioMode"]');
     const statusEl    = $("status");
     const nextLineEl  = $("nextLine");
     const timesBody   = $("timesBody");
@@ -466,10 +470,24 @@
     }
 
     // ── Short-mode toggle ─────────────────────────────────────
-    shortToggle.checked = localStorage.getItem("iqama_short_mode") === "1";
-    shortToggle.addEventListener("change", () => {
-      localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0");
-    });
+    // ── Audio mode persistence ──────────────────────────────
+    function getAudioMode() {
+      const checked = document.querySelector('input[name="audioMode"]:checked');
+      return checked ? checked.value : "iqama";
+    }
+
+    function setAudioMode(mode) {
+      const radio = document.querySelector(`input[name="audioMode"][value="${mode}"]`);
+      if (radio) radio.checked = true;
+    }
+
+    // Restore saved mode
+    const savedMode = localStorage.getItem("iqama_audio_mode") || "iqama";
+    setAudioMode(savedMode);
+
+    modeRadios.forEach(r => r.addEventListener("change", () => {
+      localStorage.setItem("iqama_audio_mode", getAudioMode());
+    }));
 
     // ── Fetch ISNA adhan times ────────────────────────────────
     async function fetchAdhanTimes() {
@@ -535,8 +553,10 @@
 
     // ── Audio ─────────────────────────────────────────────────
     function audioSrc(prayer) {
-      if (shortToggle.checked) return AUDIO.short || "./short.mp3";
-      return AUDIO[prayer] || AUDIO.default || "./eqamah.mp3";
+      const mode = getAudioMode();
+      if (mode === "short") return AUDIO.short || "./short.mp3";
+      if (mode === "adhan")  return AUDIO.adhan || "./adhan.mp3";
+      return AUDIO.iqama || "./eqamah.mp3";
     }
 
     async function play(prayer) {
@@ -638,16 +658,14 @@
     });
     stopBtn.addEventListener("click", stop);
 
-    $("testShortBtn").addEventListener("click", async () => {
-      audioEl.src = AUDIO.short || "./short.mp3";
+    async function testAudio(src, label) {
+      audioEl.src = src;
       audioEl.currentTime = 0;
-      try { await audioEl.play(); showSnooze("Short test"); } catch {}
-    });
-    $("testFullBtn").addEventListener("click", async () => {
-      audioEl.src = AUDIO.default || "./eqamah.mp3";
-      audioEl.currentTime = 0;
-      try { await audioEl.play(); showSnooze("Full iqama test"); } catch {}
-    });
+      try { await audioEl.play(); showSnooze(label); } catch {}
+    }
+    $("testAdhanBtn").addEventListener("click", () => testAudio(AUDIO.adhan || "./adhan.mp3", "Adhan test"));
+    $("testIqamaBtn").addEventListener("click", () => testAudio(AUDIO.iqama || "./eqamah.mp3", "Iqama test"));
+    $("testShortBtn").addEventListener("click", () => testAudio(AUDIO.short || "./short.mp3", "Short test"));
 
     // ── Background ────────────────────────────────────────────
     (function () {
