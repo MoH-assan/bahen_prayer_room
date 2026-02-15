@@ -78,7 +78,7 @@ const CONFIG = {
     "./how_to_get_there/200.jpg",
     "./how_to_get_there/300.jpg",
     "./how_to_get_there/400.jpg",
-    "./how_to_get_there/500.png",
+    "./how_to_get_there/500.jpg",
     "./how_to_get_there/600.jpg",
   ],
 
