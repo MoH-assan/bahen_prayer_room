@@ -1,0 +1,372 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Bahen Prayer Room — Prayer Reminder</title>
+  <style>
+    :root {
+      --bg: #f8f9fa;
+      --card-bg: #fff;
+      --text: #1a1a2e;
+      --muted: #6c757d;
+      --accent: #0d6e3e;
+      --accent-light: #e8f5e9;
+      --border: #dee2e6;
+      --radius: 14px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.6;
+      min-height: 100vh;
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+      padding: 24px 16px 48px;
+    }
+
+    header {
+      text-align: center;
+      padding: 32px 0 8px;
+    }
+    header h1 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--accent);
+    }
+    header .subtitle {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 4px;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px;
+      margin: 16px 0;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+
+    .card h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 12px;
+      color: var(--accent);
+    }
+
+    .controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    button {
+      padding: 10px 20px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+    }
+    .btn-primary:hover { background: #0b5c34; }
+
+    .btn-secondary {
+      background: #f1f3f5;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-secondary:hover { background: #e9ecef; }
+
+    #status {
+      color: var(--muted);
+      font-size: 0.9rem;
+      margin-top: 12px;
+    }
+    #nextLine {
+      font-size: 0.95rem;
+      font-weight: 500;
+      margin-top: 6px;
+      min-height: 1.4em;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    td {
+      padding: 10px 8px;
+      border-bottom: 1px solid #f0f0f0;
+      font-size: 0.95rem;
+    }
+    td:first-child {
+      font-weight: 600;
+      width: 40%;
+    }
+    tr:last-child td { border-bottom: none; }
+
+    .ok  { color: var(--accent); font-weight: 700; }
+    .bad { color: #c0392b; font-weight: 700; }
+
+    .content-block {
+      padding: 12px 16px;
+      background: var(--accent-light);
+      border-radius: 10px;
+      border-left: 4px solid var(--accent);
+    }
+    .content-block b { display: block; margin-bottom: 4px; }
+
+    .muted { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
+
+    code {
+      background: #f1f3f5;
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-size: 0.85rem;
+    }
+
+    footer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.8rem;
+      margin-top: 32px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>Bahen Prayer Room</h1>
+      <div class="subtitle">Prayer Reminder &middot; Toronto</div>
+    </header>
+
+    <!-- Controls -->
+    <div class="card">
+      <div class="controls">
+        <button class="btn-primary" id="enableBtn">Enable Audio &amp; Start</button>
+        <button class="btn-secondary" id="stopBtn">Stop</button>
+      </div>
+      <p id="status">Not running.</p>
+      <p id="nextLine"></p>
+    </div>
+
+    <!-- Iqama Times -->
+    <div class="card">
+      <h3>Iqama Times</h3>
+      <table id="timesTable"></table>
+      <p class="muted">Update times in <code>config.js</code></p>
+    </div>
+
+    <!-- Aya of the Day -->
+    <div class="card">
+      <h3>Aya of the Day</h3>
+      <div id="ayaBox" class="content-block"></div>
+      <p class="muted">Update in <code>config.js</code> &mdash; add date-specific entries or change the default.</p>
+    </div>
+
+    <!-- Hadith of the Day -->
+    <div class="card">
+      <h3>Hadith of the Day</h3>
+      <div id="hadithBox" class="content-block"></div>
+      <p class="muted">Update in <code>config.js</code> &mdash; add date-specific entries or change the default.</p>
+    </div>
+
+    <footer>
+      Bahen Prayer Room &middot; University of Toronto
+    </footer>
+  </div>
+
+  <audio id="adhan" preload="auto"></audio>
+
+  <!-- Luxon for timezone-safe scheduling -->
+  <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
+  <!-- Separate config for easy editing -->
+  <script src="./config.js"></script>
+  <script>
+    const { DateTime } = luxon;
+
+    // Read from CONFIG (loaded from config.js)
+    const ZONE              = CONFIG.timezone;
+    const IQAMA_TIMES       = CONFIG.iqamaTimes;
+    const AUDIO_BY_PRAYER   = CONFIG.audio;
+    const DAILY_AYA         = CONFIG.dailyAya;
+    const DAILY_HADITH      = CONFIG.dailyHadith;
+    const LATE_GRACE_SECONDS = CONFIG.lateGraceSeconds;
+
+    // DOM refs
+    const enableBtn  = document.getElementById("enableBtn");
+    const stopBtn    = document.getElementById("stopBtn");
+    const statusEl   = document.getElementById("status");
+    const nextLineEl = document.getElementById("nextLine");
+    const timesTable = document.getElementById("timesTable");
+    const ayaBox     = document.getElementById("ayaBox");
+    const hadithBox  = document.getElementById("hadithBox");
+    const audioEl    = document.getElementById("adhan");
+
+    let running    = false;
+    let nextEvent  = null;   // { name, dt, fired }
+    let timeoutId  = null;
+    let watchdogId = null;
+
+    // ── Helpers ─────────────────────────────────────────────
+    function nowTO() {
+      return DateTime.now().setZone(ZONE);
+    }
+
+    function fmt(dt) {
+      return dt.toFormat("yyyy-LL-dd HH:mm:ss");
+    }
+
+    function parseHHMM(hhmm) {
+      const [hh, mm] = hhmm.split(":").map(Number);
+      return { hh, mm };
+    }
+
+    // ── Build UI ────────────────────────────────────────────
+    function buildTimesTable() {
+      timesTable.innerHTML = "";
+      Object.entries(IQAMA_TIMES).forEach(([name, hhmm]) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `<td>${name}</td><td>${hhmm}</td>`;
+        timesTable.appendChild(tr);
+      });
+    }
+
+    function setTodaysText() {
+      const d   = nowTO().toFormat("yyyy-LL-dd");
+      const aya = DAILY_AYA[d]    || DAILY_AYA["default"];
+      const had = DAILY_HADITH[d] || DAILY_HADITH["default"];
+
+      ayaBox.innerHTML    = `<b>${aya.ref}</b><div>${aya.text}</div>`;
+      hadithBox.innerHTML = `<b>${had.ref}</b><div>${had.text}</div>`;
+    }
+
+    // ── Scheduling ──────────────────────────────────────────
+    function computeNextEvent() {
+      const now = nowTO();
+
+      const candidates = Object.entries(IQAMA_TIMES).map(([name, hhmm]) => {
+        const { hh, mm } = parseHHMM(hhmm);
+        let dt = now.set({ hour: hh, minute: mm, second: 0, millisecond: 0 });
+        if (dt <= now) dt = dt.plus({ days: 1 });
+        return { name, dt };
+      });
+
+      candidates.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
+      return { ...candidates[0], fired: false };
+    }
+
+    async function playForPrayer(prayerName) {
+      const src = AUDIO_BY_PRAYER[prayerName] || AUDIO_BY_PRAYER.default || "./adhan.mp3";
+      if (audioEl.src !== new URL(src, location.href).href) audioEl.src = src;
+      audioEl.currentTime = 0;
+      await audioEl.play();
+    }
+
+    function clearTimers() {
+      if (timeoutId)  { clearTimeout(timeoutId);   timeoutId  = null; }
+      if (watchdogId) { clearInterval(watchdogId);  watchdogId = null; }
+    }
+
+    function updateUI() {
+      if (!running) {
+        statusEl.innerHTML   = "Not running.";
+        nextLineEl.textContent = "";
+        return;
+      }
+      const now = nowTO();
+      statusEl.innerHTML = `Running <span class="ok">&#9679;</span> &nbsp;(keep this tab open)`;
+
+      if (nextEvent) {
+        const secs = Math.max(0, Math.floor((nextEvent.dt.toMillis() - now.toMillis()) / 1000));
+        const hh = String(Math.floor(secs / 3600)).padStart(2, "0");
+        const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
+        const ss = String(secs % 60).padStart(2, "0");
+        nextLineEl.textContent =
+          `Next: ${nextEvent.name} at ${fmt(nextEvent.dt)} (${ZONE})  |  in ${hh}:${mm}:${ss}`;
+      }
+    }
+
+    async function triggerIfDue() {
+      if (!running || !nextEvent || nextEvent.fired) return;
+
+      const now     = nowTO();
+      const diffSec = (now.toMillis() - nextEvent.dt.toMillis()) / 1000;
+
+      if (diffSec >= 0 && diffSec <= LATE_GRACE_SECONDS) {
+        nextEvent.fired = true;
+        try {
+          await playForPrayer(nextEvent.name);
+          statusEl.innerHTML = `Played for <b>${nextEvent.name}</b> <span class="ok">&#10003;</span>`;
+        } catch (e) {
+          statusEl.innerHTML =
+            `Audio blocked <span class="bad">&#10008;</span> — tap "Enable Audio & Start" again.`;
+        } finally {
+          scheduleNext();
+        }
+      }
+    }
+
+    function scheduleNext() {
+      clearTimers();
+      nextEvent = computeNextEvent();
+      updateUI();
+
+      const now     = nowTO();
+      const delayMs = Math.max(0, nextEvent.dt.toMillis() - now.toMillis());
+
+      timeoutId  = setTimeout(() => triggerIfDue(), delayMs);
+      watchdogId = setInterval(() => { updateUI(); triggerIfDue(); }, 1000);
+    }
+
+    async function start() {
+      running = true;
+      localStorage.setItem("prayer_reminder_enabled", "1");
+      scheduleNext();
+    }
+
+    function stop() {
+      running   = false;
+      nextEvent = null;
+      clearTimers();
+      localStorage.removeItem("prayer_reminder_enabled");
+      updateUI();
+    }
+
+    // ── Events ──────────────────────────────────────────────
+    enableBtn.addEventListener("click", async () => {
+      try { await playForPrayer("default"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
+      start();
+    });
+
+    stopBtn.addEventListener("click", () => stop());
+
+    // ── Init ────────────────────────────────────────────────
+    buildTimesTable();
+    setTodaysText();
+    updateUI();
+
+    if (localStorage.getItem("prayer_reminder_enabled") === "1") {
+      running = true;
+      scheduleNext();
+      statusEl.innerHTML =
+        `Running <span class="ok">&#9679;</span> &nbsp;(if sound doesn't play, tap Enable once)`;
+    }
+  </script>
+</body>
+</html>
