@@ -19,15 +19,29 @@ const CONFIG = {
     mapsUrl: "https://maps.google.com/?q=Bahen+Centre+40+St+George+St+Toronto+ON",
   },
 
+  // ── Adhan Times API ──────────────────────────────────────
+  // Adhan times are fetched daily from AlAdhan.com using the ISNA method.
+  // City/country are used for the API call.
+  adhanApi: {
+    city: "Toronto",
+    country: "Canada",
+    method: 2,   // 2 = ISNA (Islamic Society of North America)
+  },
+
   // ── Iqama Times (24-hour HH:MM) ──────────────────────────
-  // Update these whenever the masjid schedule changes.
+  // Update these whenever the prayer room schedule changes.
+  // Maghrib is AUTO-CALCULATED: adhan time + maghribOffsetMinutes.
+  // (So no need to set Maghrib here — it changes daily with sunset.)
   iqamaTimes: {
     Fajr:    "05:45",
     Dhuhr:   "13:30",
     Asr:     "16:45",
-    Maghrib: "18:10",
+    // Maghrib: auto-calculated (see maghribOffsetMinutes below)
     Isha:    "20:00",
   },
+
+  // Minutes after Maghrib adhan for Maghrib iqama
+  maghribOffsetMinutes: 5,
 
   // ── Audio Files ───────────────────────────────────────────
   // "default" is the full iqama/adhan audio.

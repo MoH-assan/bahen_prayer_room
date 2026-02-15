@@ -196,6 +196,16 @@
       width: 100%;
       border-collapse: collapse;
     }
+    th {
+      padding: 8px 8px 10px;
+      text-align: left;
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      border-bottom: 2px solid var(--border);
+    }
     td {
       padding: 10px 8px;
       border-bottom: 1px solid #f0f0f0;
@@ -203,9 +213,9 @@
     }
     td:first-child {
       font-weight: 600;
-      width: 40%;
+      width: 34%;
     }
-    tr:last-child td { border-bottom: none; }
+    tbody tr:last-child td { border-bottom: none; }
 
     .ok  { color: var(--accent); font-weight: 700; }
     .bad { color: var(--danger); font-weight: 700; }
@@ -275,10 +285,16 @@
       </div>
     </div>
 
-    <!-- Iqama Times -->
+    <!-- Prayer Times -->
     <div class="card">
-      <h3>Iqama Times (Toronto Time)</h3>
-      <table id="timesTable"></table>
+      <h3>Prayer Times (Toronto Time)</h3>
+      <table id="timesTable">
+        <thead>
+          <tr><th>Prayer</th><th>Adhan</th><th>Iqama</th></tr>
+        </thead>
+        <tbody id="timesBody"></tbody>
+      </table>
+      <p class="muted" id="adhanSource"></p>
       <p class="last-updated" id="lastUpdated"></p>
     </div>
 
@@ -308,22 +324,31 @@
   <script>
     const { DateTime } = luxon;
 
-    // Read from CONFIG (loaded from config.js)
+    // ── Read CONFIG ─────────────────────────────────────────
     const ZONE               = CONFIG.timezone;
-    const IQAMA_TIMES        = CONFIG.iqamaTimes;
+    const IQAMA_TIMES        = { ...CONFIG.iqamaTimes };  // mutable copy
     const AUDIO_BY_PRAYER    = CONFIG.audio;
     const DAILY_AYA          = CONFIG.dailyAya;
     const DAILY_HADITH       = CONFIG.dailyHadith;
     const LATE_GRACE_SECONDS = CONFIG.lateGraceSeconds;
+    const MAGHRIB_OFFSET     = CONFIG.maghribOffsetMinutes || 5;
+    const ADHAN_API          = CONFIG.adhanApi || {};
 
-    // DOM refs
+    // Adhan times fetched from API  { Fajr: "HH:MM", Dhuhr: "HH:MM", ... }
+    let adhanTimes = {};
+
+    // The 5 prayers we care about, in order
+    const PRAYER_ORDER = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+
+    // ── DOM refs ────────────────────────────────────────────
     const enableBtn    = document.getElementById("enableBtn");
     const stopBtn      = document.getElementById("stopBtn");
     const shortToggle  = document.getElementById("shortToggle");
     const statusEl     = document.getElementById("status");
     const nextLineEl   = document.getElementById("nextLine");
-    const timesTable   = document.getElementById("timesTable");
+    const timesBody    = document.getElementById("timesBody");
     const lastUpdEl    = document.getElementById("lastUpdated");
+    const adhanSrcEl   = document.getElementById("adhanSource");
     const ayaBox       = document.getElementById("ayaBox");
     const hadithBox    = document.getElementById("hadithBox");
     const audioEl      = document.getElementById("adhan");
@@ -333,7 +358,7 @@
     const snoozeBtn    = document.getElementById("snoozeBtn");
 
     let running    = false;
-    let nextEvent  = null;   // { name, dt, fired }
+    let nextEvent  = null;
     let timeoutId  = null;
     let watchdogId = null;
 
@@ -351,6 +376,12 @@
       return { hh, mm };
     }
 
+    function addMinutesToHHMM(hhmm, mins) {
+      const { hh, mm } = parseHHMM(hhmm);
+      const dt = DateTime.fromObject({ hour: hh, minute: mm }, { zone: ZONE }).plus({ minutes: mins });
+      return dt.toFormat("HH:mm");
+    }
+
     // ── Short mode persistence ──────────────────────────────
     function isShortMode() {
       return shortToggle.checked;
@@ -361,19 +392,67 @@
       localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0");
     });
 
+    // ── Fetch ISNA adhan times ──────────────────────────────
+    async function fetchAdhanTimes() {
+      try {
+        const city    = ADHAN_API.city    || "Toronto";
+        const country = ADHAN_API.country || "Canada";
+        const method  = ADHAN_API.method  || 2;  // ISNA
+        const today   = nowTO();
+        const dd      = today.toFormat("dd");
+        const MM      = today.toFormat("LL");
+        const yyyy    = today.toFormat("yyyy");
+
+        const url = `https://api.aladhan.com/v1/timingsByCity/${dd}-${MM}-${yyyy}?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${method}`;
+
+        const res  = await fetch(url);
+        const json = await res.json();
+
+        if (json.code === 200 && json.data && json.data.timings) {
+          const t = json.data.timings;
+          adhanTimes = {
+            Fajr:    t.Fajr    ? t.Fajr.replace(/ \(.*\)/, "")    : "",
+            Dhuhr:   t.Dhuhr   ? t.Dhuhr.replace(/ \(.*\)/, "")   : "",
+            Asr:     t.Asr     ? t.Asr.replace(/ \(.*\)/, "")     : "",
+            Maghrib: t.Maghrib ? t.Maghrib.replace(/ \(.*\)/, "") : "",
+            Isha:    t.Isha    ? t.Isha.replace(/ \(.*\)/, "")    : "",
+          };
+
+          // Auto-calculate Maghrib iqama = adhan + offset
+          if (adhanTimes.Maghrib) {
+            IQAMA_TIMES.Maghrib = addMinutesToHHMM(adhanTimes.Maghrib, MAGHRIB_OFFSET);
+          }
+
+          adhanSrcEl.textContent = `Adhan times: ISNA method via AlAdhan.com`;
+          return true;
+        }
+      } catch (e) {
+        console.warn("Failed to fetch adhan times:", e);
+      }
+
+      adhanSrcEl.textContent = "Adhan times unavailable (API error)";
+      // If API fails and Maghrib isn't set, use a safe fallback
+      if (!IQAMA_TIMES.Maghrib) {
+        IQAMA_TIMES.Maghrib = "18:15";
+      }
+      return false;
+    }
+
     // ── Build UI ────────────────────────────────────────────
     function buildTimesTable() {
-      timesTable.innerHTML = "";
-      Object.entries(IQAMA_TIMES).forEach(([name, hhmm]) => {
+      timesBody.innerHTML = "";
+      PRAYER_ORDER.forEach(name => {
+        const adhan = adhanTimes[name] || "—";
+        const iqama = IQAMA_TIMES[name] || "—";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${hhmm}</td>`;
-        timesTable.appendChild(tr);
+        tr.innerHTML = `<td>${name}</td><td>${adhan}</td><td>${iqama}</td>`;
+        timesBody.appendChild(tr);
       });
     }
 
     function setLastUpdated() {
       if (CONFIG.lastUpdated) {
-        lastUpdEl.textContent = `Last updated: ${CONFIG.lastUpdated}`;
+        lastUpdEl.textContent = `Iqama times last updated: ${CONFIG.lastUpdated}`;
       }
     }
 
@@ -399,12 +478,14 @@
     function computeNextEvent() {
       const now = nowTO();
 
-      const candidates = Object.entries(IQAMA_TIMES).map(([name, hhmm]) => {
-        const { hh, mm } = parseHHMM(hhmm);
-        let dt = now.set({ hour: hh, minute: mm, second: 0, millisecond: 0 });
-        if (dt <= now) dt = dt.plus({ days: 1 });
-        return { name, dt };
-      });
+      const candidates = Object.entries(IQAMA_TIMES)
+        .filter(([name]) => PRAYER_ORDER.includes(name))
+        .map(([name, hhmm]) => {
+          const { hh, mm } = parseHHMM(hhmm);
+          let dt = now.set({ hour: hh, minute: mm, second: 0, millisecond: 0 });
+          if (dt <= now) dt = dt.plus({ days: 1 });
+          return { name, dt };
+        });
 
       candidates.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
       return { ...candidates[0], fired: false };
@@ -445,7 +526,6 @@
       statusEl.innerHTML = `Skipped <span class="ok">&#10003;</span>`;
     });
 
-    // Auto-hide snooze bar when audio ends naturally
     audioEl.addEventListener("ended", () => {
       hideSnoozeBar();
     });
@@ -531,22 +611,26 @@
     stopBtn.addEventListener("click", () => stop());
 
     // ── Init ────────────────────────────────────────────────
-    buildTimesTable();
-    setLastUpdated();
-    setLocation();
-    setTodaysText();
-    updateUI();
+    (async function init() {
+      setLocation();
+      setTodaysText();
 
-    if (localStorage.getItem("iqama_reminder_enabled") === "1" ||
-        localStorage.getItem("prayer_reminder_enabled") === "1") {
-      // Migrate old key
-      localStorage.removeItem("prayer_reminder_enabled");
-      localStorage.setItem("iqama_reminder_enabled", "1");
-      running = true;
-      scheduleNext();
-      statusEl.innerHTML =
-        `Running <span class="ok">&#9679;</span> &nbsp;(if sound doesn't play, tap Enable once)`;
-    }
+      // Fetch adhan times, then build table + schedule
+      await fetchAdhanTimes();
+      buildTimesTable();
+      setLastUpdated();
+      updateUI();
+
+      if (localStorage.getItem("iqama_reminder_enabled") === "1" ||
+          localStorage.getItem("prayer_reminder_enabled") === "1") {
+        localStorage.removeItem("prayer_reminder_enabled");
+        localStorage.setItem("iqama_reminder_enabled", "1");
+        running = true;
+        scheduleNext();
+        statusEl.innerHTML =
+          `Running <span class="ok">&#9679;</span> &nbsp;(if sound doesn't play, tap Enable once)`;
+      }
+    })();
   </script>
 </body>
 </html>
