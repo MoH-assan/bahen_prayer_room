@@ -163,6 +163,24 @@
       background: var(--accent); color: #fff; border-color: var(--accent);
     }
 
+    /* Toggle switch */
+    .toggle-row { display: flex; align-items: center; gap: 10px; font-size: 0.9rem; }
+    .toggle-row label { cursor: pointer; user-select: none; }
+    .switch           { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .switch input     { opacity: 0; width: 0; height: 0; }
+    .toggle-slider    { position: absolute; cursor: pointer; inset: 0;
+                        background: #ccc; border-radius: 24px; transition: 0.3s; }
+    .toggle-slider::before {
+      content: ""; position: absolute; height: 18px; width: 18px;
+      left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s;
+    }
+    .switch input:checked + .toggle-slider          { background: #0d6e3e; }
+    .switch input:checked + .toggle-slider::before   { transform: translateX(20px); }
+
+    /* Status indicator */
+    .status-running { color: #0d6e3e; font-weight: 700; }
+    .status-stopped { color: var(--danger); font-weight: 700; }
+
     /* Volume slider */
     .volume-row {
       display: flex; align-items: center; gap: 10px;
@@ -313,11 +331,17 @@
         <button class="btn-secondary" id="stopBtn">Stop</button>
       </div>
       <div class="audio-mode">
-        <label class="muted" style="font-weight:600;margin-bottom:6px;display:block;">Notification sound:</label>
+        <label class="muted" style="font-weight:600;margin-bottom:6px;display:block;">Play at iqama time:</label>
         <div class="mode-options">
-          <label class="mode-option"><input type="radio" name="audioMode" value="adhan" /><span>Adhan</span></label>
-          <label class="mode-option"><input type="radio" name="audioMode" value="iqama" checked /><span>Iqama</span></label>
-          <label class="mode-option"><input type="radio" name="audioMode" value="short" /><span>Short</span></label>
+          <label class="mode-option"><input type="checkbox" id="chkAdhan" /><span>Adhan</span></label>
+          <label class="mode-option"><input type="checkbox" id="chkIqama" checked /><span>Iqama</span></label>
+        </div>
+        <div class="toggle-row" style="margin-top:10px;">
+          <label class="switch">
+            <input type="checkbox" id="shortToggle" />
+            <span class="toggle-slider"></span>
+          </label>
+          <label for="shortToggle">Short notification (overrides above)</label>
         </div>
       </div>
       <div class="volume-row">
@@ -460,7 +484,9 @@
     const $ = id => document.getElementById(id);
     const enableBtn   = $("enableBtn");
     const stopBtn     = $("stopBtn");
-    const modeRadios = document.querySelectorAll('input[name="audioMode"]');
+    const chkAdhan    = $("chkAdhan");
+    const chkIqama    = $("chkIqama");
+    const shortToggle = $("shortToggle");
     const statusEl    = $("status");
     const nextLineEl  = $("nextLine");
     const timesBody   = $("timesBody");
@@ -491,25 +517,15 @@
         .plus({ minutes: mins }).toFormat("HH:mm");
     }
 
-    // ── Short-mode toggle ─────────────────────────────────────
-    // ── Audio mode persistence ──────────────────────────────
-    function getAudioMode() {
-      const checked = document.querySelector('input[name="audioMode"]:checked');
-      return checked ? checked.value : "iqama";
-    }
+    // ── Audio selection persistence ─────────────────────────
+    // Restore saved selections
+    chkAdhan.checked    = localStorage.getItem("iqama_chk_adhan") === "1";
+    chkIqama.checked    = localStorage.getItem("iqama_chk_iqama") !== "0"; // default on
+    shortToggle.checked = localStorage.getItem("iqama_short_mode") === "1";
 
-    function setAudioMode(mode) {
-      const radio = document.querySelector(`input[name="audioMode"][value="${mode}"]`);
-      if (radio) radio.checked = true;
-    }
-
-    // Restore saved mode
-    const savedMode = localStorage.getItem("iqama_audio_mode") || "iqama";
-    setAudioMode(savedMode);
-
-    modeRadios.forEach(r => r.addEventListener("change", () => {
-      localStorage.setItem("iqama_audio_mode", getAudioMode());
-    }));
+    chkAdhan.addEventListener("change", () => localStorage.setItem("iqama_chk_adhan", chkAdhan.checked ? "1" : "0"));
+    chkIqama.addEventListener("change", () => localStorage.setItem("iqama_chk_iqama", chkIqama.checked ? "1" : "0"));
+    shortToggle.addEventListener("change", () => localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0"));
 
     // ── Fetch ISNA adhan times ────────────────────────────────
     async function fetchAdhanTimes() {
@@ -574,28 +590,49 @@
     }
 
     // ── Audio ─────────────────────────────────────────────────
-    function audioSrc(prayer) {
-      const mode = getAudioMode();
-      if (mode === "short") return AUDIO.short || "./short.mp3";
-      if (mode === "adhan")  return AUDIO.adhan || "./adhan.mp3";
-      return AUDIO.iqama || "./eqamah.mp3";
+    // Returns array of audio sources to play in order
+    function getAudioQueue() {
+      if (shortToggle.checked) return [AUDIO.short || "./short.mp3"];
+      const queue = [];
+      if (chkAdhan.checked) queue.push(AUDIO.adhan || "./adhan.mp3");
+      if (chkIqama.checked) queue.push(AUDIO.iqama || "./eqamah.mp3");
+      if (queue.length === 0) queue.push(AUDIO.iqama || "./eqamah.mp3"); // fallback
+      return queue;
     }
 
-    async function play(prayer) {
-      const src = audioSrc(prayer);
+    async function playSource(src) {
       if (audioEl.src !== new URL(src, location.href).href) audioEl.src = src;
       audioEl.currentTime = 0;
       await audioEl.play();
     }
 
-    function stopAudio() { audioEl.pause(); audioEl.currentTime = 0; hideSnooze(); }
+    // Play queue sequentially (adhan then iqama if both selected)
+    let audioQueue = [];
+    async function playAll(prayer) {
+      audioQueue = getAudioQueue();
+      showSnooze(prayer);
+      await playNext();
+    }
+
+    async function playNext() {
+      if (audioQueue.length === 0) return;
+      const src = audioQueue.shift();
+      await playSource(src);
+    }
+
+    // When one finishes, play next in queue
+    audioEl.addEventListener("ended", () => {
+      if (audioQueue.length > 0) { playNext(); }
+      else { hideSnooze(); }
+    });
+
+    function stopAudio() { audioQueue = []; audioEl.pause(); audioEl.currentTime = 0; hideSnooze(); }
 
     // ── Snooze bar ────────────────────────────────────────────
     function showSnooze(name) { snoozeText.textContent = `Playing ${name}...`; snoozeBar.classList.add("visible"); }
     function hideSnooze()     { snoozeBar.classList.remove("visible"); }
 
     snoozeBtn.addEventListener("click", () => { stopAudio(); statusEl.innerHTML = `Skipped <span class="ok">&#10003;</span>`; });
-    audioEl.addEventListener("ended", hideSnooze);
 
     // ── Scheduling ────────────────────────────────────────────
     function clearTimers() {
@@ -664,8 +701,11 @@
     updateClock();
 
     function updateUI() {
-      if (!running) { statusEl.innerHTML = "Not running."; nextLineEl.textContent = ""; return; }
-      statusEl.innerHTML = `Running <span class="ok">&#9679;</span> &nbsp;(keep this tab open)`;
+      if (!running) {
+        statusEl.innerHTML = `<span class="status-stopped">&#9679; Not running</span>`;
+        nextLineEl.textContent = ""; return;
+      }
+      statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(keep this tab open)`;
       if (nextEvent) {
         const s  = Math.max(0, Math.floor((nextEvent.dt.toMillis() - now().toMillis()) / 1000));
         const hh = String(Math.floor(s / 3600)).padStart(2, "0");
@@ -681,11 +721,10 @@
       if (diff >= 0 && diff <= GRACE_SEC) {
         nextEvent.fired = true;
         try {
-          await play(nextEvent.name);
-          showSnooze(nextEvent.name);
-          statusEl.innerHTML = `Playing <b>${nextEvent.name}</b> <span class="ok">&#10003;</span>`;
+          await playAll(nextEvent.name);
+          statusEl.innerHTML = `<span class="status-running">&#9679;</span> Playing <b>${nextEvent.name}</b>`;
         } catch {
-          statusEl.innerHTML = `Audio blocked <span class="bad">&#10008;</span> — tap "Enable Audio & Start" again.`;
+          statusEl.innerHTML = `<span class="status-stopped">&#9679;</span> Audio blocked — tap "Enable Audio & Start" again.`;
         } finally { scheduleNext(); }
       }
     }
@@ -721,15 +760,14 @@
 
     // ── Events ────────────────────────────────────────────────
     enableBtn.addEventListener("click", async () => {
-      try { await play("default"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
+      try { await playSource(AUDIO.short || "./short.mp3"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
       start();
     });
     stopBtn.addEventListener("click", stop);
 
     async function testAudio(src, label) {
-      audioEl.src = src;
-      audioEl.currentTime = 0;
-      try { await audioEl.play(); showSnooze(label); } catch {}
+      audioQueue = []; // clear any queue
+      try { await playSource(src); showSnooze(label); } catch {}
     }
     $("testAdhanBtn").addEventListener("click", () => testAudio(AUDIO.adhan || "./adhan.mp3", "Adhan test"));
     $("testIqamaBtn").addEventListener("click", () => testAudio(AUDIO.iqama || "./eqamah.mp3", "Iqama test"));
@@ -799,7 +837,7 @@
       if (localStorage.getItem("iqama_reminder_enabled") === "1") {
         running = true;
         scheduleNext();
-        statusEl.innerHTML = `Running <span class="ok">&#9679;</span> &nbsp;(if sound doesn't play, tap Enable once)`;
+        statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(if sound doesn't play, tap Enable once)`;
       }
     })();
   })();
