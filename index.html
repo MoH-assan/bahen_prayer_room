@@ -323,6 +323,7 @@
     <!-- Prayer Times -->
     <div class="card glass">
       <h3>Prayer Times (Toronto Time)</h3>
+      <p class="muted" id="todayDate" style="margin-top:-6px;margin-bottom:10px;"></p>
       <table>
         <thead><tr><th>Prayer</th><th>Adhan</th><th>Iqama</th></tr></thead>
         <tbody id="timesBody"></tbody>
@@ -490,12 +491,21 @@
           if (adhanTimes.Maghrib) {
             IQAMA_TIMES.Maghrib = addMinutes(adhanTimes.Maghrib, MAGHRIB_OFFSET);
           }
+          // Display today's Gregorian and Hijri dates
+          const greg  = json.data.date?.gregorian;
+          const hijri = json.data.date?.hijri;
+          if (greg && hijri) {
+            const gregStr  = `${greg.weekday.en}, ${greg.month.en} ${greg.day}, ${greg.year}`;
+            const hijriStr = `${hijri.day} ${hijri.month.en} ${hijri.year} AH`;
+            $("todayDate").innerHTML = `${gregStr} &mdash; ${hijriStr}`;
+          }
           adhanSrcEl.textContent = "Adhan times: ISNA method via AlAdhan.com";
           return;
         }
       } catch (e) { console.warn("Adhan API error:", e); }
 
       adhanSrcEl.textContent = "Adhan times unavailable (API error)";
+      $("todayDate").textContent = now().toFormat("EEEE, LLLL d, yyyy");
       if (!IQAMA_TIMES.Maghrib) IQAMA_TIMES.Maghrib = "18:15";
     }
 
