@@ -1,8 +1,12 @@
 # Bahen Prayer Room — Iqama Reminder
 
-A simple, self-hosted iqama reminder for the Bahen Centre prayer room at the University of Toronto. Plays the iqama (or a short notification) at scheduled times and displays a daily aya and hadith.
+A self-hosted iqama reminder for the Bahen Centre prayer room at the University of Toronto. Plays the iqama (or a short notification) at scheduled times, shows ISNA adhan times, and displays a daily aya and hadith.
+
+> **Note:** This page is not official. It is not affiliated with, endorsed by, or representative of the MSA, the University of Toronto, or any official university body. This site is currently in **beta**.
 
 **Live site:** https://moh-assan.github.io/bahen_prayer_room/
+
+**Feedback:** Submit a [GitHub issue](https://github.com/MoH-assan/bahen_prayer_room/issues), [pull request](https://github.com/MoH-assan/bahen_prayer_room/pulls), or email [m.abobaker@live.com](mailto:m.abobaker@live.com).
 
 ---
 
@@ -44,7 +48,7 @@ dailyAya: {
 },
 ```
 
-The site checks today's date (Toronto time) and falls back to `"default"` if no entry matches.
+The site checks today's date (Toronto time) and falls back to `"default"` if no entry matches. Same format for `dailyHadith`.
 
 ### Replace the Audio Files
 
@@ -55,12 +59,44 @@ There are two audio modes:
 To replace either:
 1. Add your `.mp3` file to the repo.
 2. In `config.js`, update the path:
-   ```js
-   audio: {
-     default: "./my-iqama.mp3",
-     short:   "./my-beep.mp3",
-   },
-   ```
+
+```js
+audio: {
+  default: "./my-iqama.mp3",
+  short:   "./my-beep.mp3",
+},
+```
+
+You can also set different audio per prayer by uncommenting individual lines (e.g., `Fajr: "./fajr.mp3"`).
+
+### Change Background Images
+
+Background images are listed in `config.js`. A random one is picked each time the page loads:
+
+```js
+backgrounds: [
+  "./backrgounds/Background6.png",
+  "./backrgounds/Background7.png",
+],
+```
+
+To add a new background: drop the image in the `backrgounds/` folder and add its path to the array.
+
+### Change Direction Images
+
+The "How to Reach the Room" slider reads from `config.js`. Images are shown in the listed order:
+
+```js
+directionImages: [
+  "./how_to_get_there/000.png",
+  "./how_to_get_there/100.png",
+  "./how_to_get_there/200.jpg",
+  "./how_to_get_there/300.jpg",
+  "./how_to_get_there/400.jpg",
+],
+```
+
+To add/remove steps: update the files in `how_to_get_there/` and edit the array.
 
 ### Change the Location
 
@@ -94,24 +130,31 @@ GitHub Pages will automatically redeploy within a minute or two.
 - Plays full iqama or short notification at each prayer time
 - **Skip** button to stop audio once it starts playing
 - **Short notification** toggle (remembered across sessions)
+- **Test Sound** button to preview the short notification
 - Daily aya and hadith (date-specific or default)
 - **Directions slider** with step-by-step photos to find the room
-- Random background image on each page load
+- Random background image on each page load (configurable)
+- Facilities info (washroom, sisters' prayer area)
 - Location link to Google Maps
 - "Last updated" date for iqama times
+- How-to-use instructions for visitors
 - All times shown in Toronto timezone
+- Beta notice with feedback links
 
 ---
 
 ## Files
 
-| File | Purpose |
-|------|---------|
+| File / Folder | Purpose |
+|---------------|---------|
 | `index.html` | Main page (HTML + CSS + JS logic) |
-| `config.js` | All editable settings (times, content, audio, location) |
+| `config.js` | **All editable settings** (times, content, audio, images, location) |
 | `eqamah.mp3` | Full iqama audio |
 | `short.mp3` | Short notification audio |
 | `adhan.mp3` | Backup adhan audio |
+| `backrgounds/` | Background images (random on each load) |
+| `how_to_get_there/` | Direction photos shown in the slider |
+| `not_used_backgrounds/` | Unused background images (not displayed) |
 | `README.md` | This file |
 
 ---
@@ -127,7 +170,6 @@ GitHub Pages will automatically redeploy within a minute or two.
 
 ## Credits
 
-- Adhan audio: [AlAdhan.com](https://aladhan.com/download-adhans)
+- Adhan times API: [AlAdhan.com](https://aladhan.com) (ISNA method)
 - Timezone handling: [Luxon](https://moment.github.io/luxon/)
-- Short notification audio: [Short Notification](https://pixabay.com/sound-effects/search/notification/)
-- Background image: [Google Images](Mohamed Fazlur Rahman)
+- Adhan audio: [AlAdhan.com](https://aladhan.com/download-adhans)
