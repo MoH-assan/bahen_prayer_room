@@ -247,38 +247,63 @@
 
     .muted { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
 
-    /* Steps gallery */
-    .steps-gallery {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-top: 12px;
-    }
-    .step-img {
+    /* Image slider */
+    .slider-wrap {
       position: relative;
+      margin-top: 12px;
       border-radius: 10px;
       overflow: hidden;
     }
-    .step-img img {
+    .slider-wrap img {
       width: 100%;
-      display: block;
+      display: none;
       border-radius: 10px;
     }
-    .step-num {
+    .slider-wrap img.active { display: block; }
+    .slider-badge {
       position: absolute;
       top: 8px;
       left: 8px;
-      width: 28px;
+      min-width: 28px;
       height: 28px;
+      padding: 0 8px;
       background: var(--accent);
       color: #fff;
-      border-radius: 50%;
+      border-radius: 14px;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 0.85rem;
+      font-size: 0.8rem;
       font-weight: 700;
       box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    }
+    .slider-controls {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 14px;
+      margin-top: 10px;
+    }
+    .slider-controls button {
+      width: 36px;
+      height: 36px;
+      padding: 0;
+      border-radius: 50%;
+      background: var(--accent);
+      color: #fff;
+      font-size: 1.1rem;
+      line-height: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .slider-controls button:hover { background: #0b5c34; }
+    .slider-counter {
+      font-size: 0.85rem;
+      color: var(--muted);
+      font-weight: 600;
+      min-width: 40px;
+      text-align: center;
     }
 
     .last-updated {
@@ -393,12 +418,13 @@
     <div class="card">
       <h3>How to Reach the Room</h3>
 
-      <div class="steps-gallery">
-        <div class="step-img"><span class="step-num">1</span><img src="./how_to_get_there/000.png" alt="Step 1" /></div>
-        <div class="step-img"><span class="step-num">2</span><img src="./how_to_get_there/100.png" alt="Step 2" /></div>
-        <div class="step-img"><span class="step-num">3</span><img src="./how_to_get_there/200.jpg" alt="Step 3" /></div>
-        <div class="step-img"><span class="step-num">4</span><img src="./how_to_get_there/300.jpg" alt="Step 4" /></div>
-        <div class="step-img"><span class="step-num">5</span><img src="./how_to_get_there/400.jpg" alt="Step 5" /></div>
+      <div class="slider-wrap" id="dirSlider">
+        <!-- Built from config.js directionImages -->
+      </div>
+      <div class="slider-controls">
+        <button id="sliderPrev">&#8592;</button>
+        <span class="slider-counter" id="sliderCounter"></span>
+        <button id="sliderNext">&#8594;</button>
       </div>
 
       <a href="https://bahen-prayer-room.wheree.com/" target="_blank" rel="noopener"
@@ -725,33 +751,79 @@
       try { await audioEl.play(); } catch {}
     });
 
-    // ── Background (auto-detects all images in backrgounds/) ──
-    (async function setBackground() {
-      // Try all possible background filenames.
-      // Add new images as Background8.jpg, Background9.png, etc.
-      // Supports .png, .jpg, .jpeg — any that exist will be used.
-      const candidates = [];
-      for (let i = 1; i <= 20; i++) {
-        candidates.push(`./backrgounds/Background${i}.png`);
-        candidates.push(`./backrgounds/Background${i}.jpg`);
-        candidates.push(`./backrgounds/Background${i}.jpeg`);
-      }
-      candidates.push("./backrgounds/Background.png");
-      candidates.push("./backrgounds/Background.jpg");
-
-      // Check which files actually exist (fast HEAD requests)
-      const checks = candidates.map(url =>
-        fetch(url, { method: "HEAD" })
-          .then(r => r.ok ? url : null)
-          .catch(() => null)
-      );
-      const results = await Promise.all(checks);
-      const available = results.filter(Boolean);
-
-      if (available.length > 0) {
-        const pick = available[Math.floor(Math.random() * available.length)];
+    // ── Background (from config.js) ────────────────────────
+    (function setBackground() {
+      const bgs = CONFIG.backgrounds || [];
+      if (bgs.length > 0) {
+        const pick = bgs[Math.floor(Math.random() * bgs.length)];
         document.body.style.backgroundImage = `url('${pick}')`;
       }
+    })();
+
+    // ── Directions slider (from config.js) ──────────────────
+    (function initSlider() {
+      const images  = CONFIG.directionImages || [];
+      const wrap    = document.getElementById("dirSlider");
+      const counter = document.getElementById("sliderCounter");
+      if (!images.length) return;
+
+      // Build images from config
+      images.forEach((src, i) => {
+        const container = document.createElement("div");
+        container.style.position = "relative";
+
+        const img = document.createElement("img");
+        img.src = src;
+        img.alt = `Step ${i + 1}`;
+        if (i === 0) img.classList.add("active");
+
+        const badge = document.createElement("span");
+        badge.className = "slider-badge";
+        badge.textContent = `${i + 1} / ${images.length}`;
+
+        container.appendChild(img);
+        container.appendChild(badge);
+        wrap.appendChild(container);
+      });
+
+      const allImgs = wrap.querySelectorAll("img");
+      let idx = 0;
+      const total = allImgs.length;
+      counter.textContent = `1 / ${total}`;
+
+      function show(i) {
+        allImgs.forEach((img, n) => {
+          img.classList.toggle("active", n === i);
+        });
+        counter.textContent = `${i + 1} / ${total}`;
+        // Update all badges
+        wrap.querySelectorAll(".slider-badge").forEach((b, n) => {
+          b.style.display = (n === i) ? "flex" : "none";
+        });
+      }
+
+      document.getElementById("sliderPrev").addEventListener("click", () => {
+        idx = (idx - 1 + total) % total;
+        show(idx);
+      });
+      document.getElementById("sliderNext").addEventListener("click", () => {
+        idx = (idx + 1) % total;
+        show(idx);
+      });
+
+      // Swipe support for mobile
+      let startX = 0;
+      wrap.addEventListener("touchstart", e => { startX = e.touches[0].clientX; }, { passive: true });
+      wrap.addEventListener("touchend", e => {
+        const diff = e.changedTouches[0].clientX - startX;
+        if (Math.abs(diff) > 40) {
+          if (diff < 0) { idx = (idx + 1) % total; }
+          else          { idx = (idx - 1 + total) % total; }
+          show(idx);
+        }
+      }, { passive: true });
+
+      show(0);
     })();
 
     // ── Init ────────────────────────────────────────────────

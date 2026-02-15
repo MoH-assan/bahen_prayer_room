@@ -80,6 +80,24 @@ const CONFIG = {
     },
   },
 
+  // ── Background Images ────────────────────────────────────
+  // A random one is picked each time the page loads.
+  // Add or remove paths as needed.
+  backgrounds: [
+    "./backrgounds/Background6.png",
+    "./backrgounds/Background7.png",
+  ],
+
+  // ── How to Get There (direction images) ─────────────────
+  // Shown in a slider, in this exact order.
+  directionImages: [
+    "./how_to_get_there/000.png",
+    "./how_to_get_there/100.png",
+    "./how_to_get_there/200.jpg",
+    "./how_to_get_there/300.jpg",
+    "./how_to_get_there/400.jpg",
+  ],
+
   // ── Advanced ──────────────────────────────────────────────
   // How many seconds after the scheduled time we still trigger
   // (handles browser tab throttling).
