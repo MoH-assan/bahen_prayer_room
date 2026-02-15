@@ -330,7 +330,7 @@
         <button class="btn-secondary" id="stopBtn">Stop</button>
       </div>
       <div class="audio-mode">
-        <label class="muted" style="font-weight:600;margin-bottom:6px;display:block;">Play at iqama time:</label>
+        <label class="muted" style="font-weight:600;margin-bottom:6px;display:block;">Play reminders at selected times:</label>
         <div class="mode-options">
           <label class="mode-option"><input type="checkbox" id="chkAdhan" /><span>Adhan</span></label>
           <label class="mode-option"><input type="checkbox" id="chkIqama" checked /><span>Iqama</span></label>
@@ -395,8 +395,8 @@
       <ol class="how-to-list">
         <li><strong>Tap "Enable Audio &amp; Start"</strong> above &mdash; this unlocks sound in your browser and starts the reminder.</li>
         <li><strong>Keep this tab open</strong> &mdash; the reminder runs in the background as long as the tab stays open.</li>
-        <li>When it's iqama time, the audio will play automatically. Use the <strong>Skip</strong> button to stop it early.</li>
-        <li>Toggle <strong>"Short notification"</strong> if you prefer a brief alert instead of the full iqama audio.</li>
+        <li>At selected adhan/iqama times, the audio will play automatically. Use the <strong>Skip</strong> button to stop it early.</li>
+        <li>Toggle <strong>"Short notification"</strong> if you prefer a brief alert instead of full adhan/iqama audio.</li>
         <li>Tap <strong>"Stop"</strong> to disable the reminder at any time.</li>
       </ol>
       <p class="muted">Use the volume slider and test buttons in the controls above to preview sounds.</p>
@@ -515,14 +515,40 @@
     }
 
     // ── Audio selection persistence ─────────────────────────
+    function hasSelectedReminderType() {
+      return chkAdhan.checked || chkIqama.checked;
+    }
+
+    function enforceReminderSelectionRules() {
+      const hasSelection = hasSelectedReminderType();
+      if (!hasSelection) shortToggle.checked = false;
+      shortToggle.disabled = !hasSelection;
+      localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0");
+    }
+
+    function onReminderModeChanged() {
+      enforceReminderSelectionRules();
+      if (running) scheduleNext();
+    }
+
     // Restore saved selections
     chkAdhan.checked    = localStorage.getItem("iqama_chk_adhan") === "1";
     chkIqama.checked    = localStorage.getItem("iqama_chk_iqama") !== "0"; // default on
     shortToggle.checked = localStorage.getItem("iqama_short_mode") === "1";
+    enforceReminderSelectionRules();
 
-    chkAdhan.addEventListener("change", () => localStorage.setItem("iqama_chk_adhan", chkAdhan.checked ? "1" : "0"));
-    chkIqama.addEventListener("change", () => localStorage.setItem("iqama_chk_iqama", chkIqama.checked ? "1" : "0"));
-    shortToggle.addEventListener("change", () => localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0"));
+    chkAdhan.addEventListener("change", () => {
+      localStorage.setItem("iqama_chk_adhan", chkAdhan.checked ? "1" : "0");
+      onReminderModeChanged();
+    });
+    chkIqama.addEventListener("change", () => {
+      localStorage.setItem("iqama_chk_iqama", chkIqama.checked ? "1" : "0");
+      onReminderModeChanged();
+    });
+    shortToggle.addEventListener("change", () => {
+      enforceReminderSelectionRules();
+      if (running) scheduleNext();
+    });
 
     // ── Fetch ISNA adhan times ────────────────────────────────
     async function fetchAdhanTimes() {
@@ -587,14 +613,19 @@
     }
 
     // ── Audio ─────────────────────────────────────────────────
-    // Returns array of audio sources to play in order
-    function getAudioQueue() {
-      if (shortToggle.checked) return [AUDIO.short || "./short.mp3"];
-      const queue = [];
-      if (chkAdhan.checked) queue.push(AUDIO.adhan || "./adhan.mp3");
-      if (chkIqama.checked) queue.push(AUDIO.iqama || "./eqamah.mp3");
-      if (queue.length === 0) queue.push(AUDIO.iqama || "./eqamah.mp3"); // fallback
-      return queue;
+    function isValidHHMM(value) {
+      return typeof value === "string" && /^\d{1,2}:\d{2}$/.test(value);
+    }
+
+    function sourceForEventType(eventType) {
+      if (shortToggle.checked) return AUDIO.short || "./short.mp3";
+      if (eventType === "adhan") return AUDIO.adhan || "./adhan.mp3";
+      return AUDIO.iqama || "./eqamah.mp3";
+    }
+
+    function labelForEvent(evt) {
+      const kind = evt.type === "adhan" ? "Adhan" : "Iqama";
+      return `${evt.prayer} ${kind}`;
     }
 
     async function playSource(src) {
@@ -603,27 +634,15 @@
       await audioEl.play();
     }
 
-    // Play queue sequentially (adhan then iqama if both selected)
-    let audioQueue = [];
-    async function playAll(prayer) {
-      audioQueue = getAudioQueue();
-      showSnooze(prayer);
-      await playNext();
+    async function playEvent(evt) {
+      showSnooze(labelForEvent(evt));
+      await playSource(sourceForEventType(evt.type));
     }
 
-    async function playNext() {
-      if (audioQueue.length === 0) return;
-      const src = audioQueue.shift();
-      await playSource(src);
-    }
+    // Hide the playing bar when one clip finishes
+    audioEl.addEventListener("ended", () => { hideSnooze(); });
 
-    // When one finishes, play next in queue
-    audioEl.addEventListener("ended", () => {
-      if (audioQueue.length > 0) { playNext(); }
-      else { hideSnooze(); }
-    });
-
-    function stopAudio() { audioQueue = []; audioEl.pause(); audioEl.currentTime = 0; hideSnooze(); }
+    function stopAudio() { audioEl.pause(); audioEl.currentTime = 0; hideSnooze(); }
 
     // ── Snooze bar ────────────────────────────────────────────
     function showSnooze(name) { snoozeText.textContent = `Playing ${name}...`; snoozeBar.classList.add("visible"); }
@@ -637,18 +656,31 @@
       if (watchdogId) { clearInterval(watchdogId); watchdogId = null; }
     }
 
+    function eventDateTime(hhmm, refNow) {
+      const { h, m } = parseHHMM(hhmm);
+      let dt = refNow.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+      if (dt <= refNow) dt = dt.plus({ days: 1 });
+      return dt;
+    }
+
     function computeNext() {
       const n = now();
-      const list = Object.entries(IQAMA_TIMES)
-        .filter(([k]) => PRAYER_ORDER.includes(k))
-        .map(([name, hhmm]) => {
-          const { h, m } = parseHHMM(hhmm);
-          let dt = n.set({ hour: h, minute: m, second: 0, millisecond: 0 });
-          if (dt <= n) dt = dt.plus({ days: 1 });
-          return { name, dt };
-        });
-      list.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
-      return { ...list[0], fired: false };
+      const events = [];
+
+      PRAYER_ORDER.forEach(prayer => {
+        const adhanHHMM = adhanTimes[prayer];
+        const iqamaHHMM = IQAMA_TIMES[prayer];
+
+        if (chkAdhan.checked && isValidHHMM(adhanHHMM)) {
+          events.push({ prayer, type: "adhan", dt: eventDateTime(adhanHHMM, n) });
+        }
+        if (chkIqama.checked && isValidHHMM(iqamaHHMM)) {
+          events.push({ prayer, type: "iqama", dt: eventDateTime(iqamaHHMM, n) });
+        }
+      });
+
+      events.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
+      return events.length ? { ...events[0], fired: false } : null;
     }
 
     // ── Clock & Countdown ──────────────────────────────────
@@ -702,6 +734,10 @@
         statusEl.innerHTML = `<span class="status-stopped">&#9679; Not running</span>`;
         return;
       }
+      if (!hasSelectedReminderType()) {
+        statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(no reminders selected)`;
+        return;
+      }
       statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(keep this tab open)`;
     }
 
@@ -711,8 +747,8 @@
       if (diff >= 0 && diff <= GRACE_SEC) {
         nextEvent.fired = true;
         try {
-          await playAll(nextEvent.name);
-          statusEl.innerHTML = `<span class="status-running">&#9679;</span> Playing <b>${nextEvent.name}</b>`;
+          await playEvent(nextEvent);
+          statusEl.innerHTML = `<span class="status-running">&#9679;</span> Playing <b>${labelForEvent(nextEvent)}</b>`;
         } catch {
           statusEl.innerHTML = `<span class="status-stopped">&#9679;</span> Audio blocked — tap "Enable Audio & Start" again.`;
         } finally { scheduleNext(); }
@@ -723,6 +759,12 @@
       clearTimers();
       nextEvent = computeNext();
       updateUI();
+      if (!nextEvent) {
+        if (running && hasSelectedReminderType()) {
+          statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(no upcoming selected reminders)`;
+        }
+        return;
+      }
       const ms = Math.max(0, nextEvent.dt.toMillis() - now().toMillis());
       timeoutId  = setTimeout(triggerIfDue, ms);
       watchdogId = setInterval(() => { updateUI(); triggerIfDue(); }, 1000);
@@ -756,7 +798,6 @@
     stopBtn.addEventListener("click", stop);
 
     async function testAudio(src, label) {
-      audioQueue = []; // clear any queue
       try { await playSource(src); showSnooze(label); } catch {}
     }
     $("testAdhanBtn").addEventListener("click", () => testAudio(AUDIO.adhan || "./adhan.mp3", "Adhan test"));
@@ -827,7 +868,9 @@
       if (localStorage.getItem("iqama_reminder_enabled") === "1") {
         running = true;
         scheduleNext();
-        statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(if sound doesn't play, tap Enable once)`;
+        if (nextEvent) {
+          statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(if sound doesn't play, tap Enable once)`;
+        }
       }
     })();
   })();
