@@ -202,7 +202,6 @@
     .volume-pct { min-width: 32px; text-align: right; }
 
     #status    { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
-    #nextLine  { font-size: 0.95rem; font-weight: 500; margin-top: 6px; min-height: 1.4em; }
 
     /* Snooze bar */
     #snoozeBar {
@@ -355,7 +354,6 @@
         <button class="btn-secondary" id="testShortBtn">&#9835; Test Short</button>
       </div>
       <p id="status">Not running.</p>
-      <p id="nextLine"></p>
       <div id="snoozeBar">
         <span class="snooze-text" id="snoozeText">Playing...</span>
         <button class="btn-warn" id="snoozeBtn">Skip</button>
@@ -488,7 +486,6 @@
     const chkIqama    = $("chkIqama");
     const shortToggle = $("shortToggle");
     const statusEl    = $("status");
-    const nextLineEl  = $("nextLine");
     const timesBody   = $("timesBody");
     const lastUpdEl   = $("lastUpdated");
     const adhanSrcEl  = $("adhanSource");
@@ -661,7 +658,7 @@
     const currentTimeEl  = $("currentTime");
 
     function updateClock() {
-      currentTimeEl.textContent = now().toFormat("hh:mm:ss a");
+      currentTimeEl.textContent = now().toFormat("hh:mm a");
     }
 
     function updateCountdown() {
@@ -703,16 +700,9 @@
     function updateUI() {
       if (!running) {
         statusEl.innerHTML = `<span class="status-stopped">&#9679; Not running</span>`;
-        nextLineEl.textContent = ""; return;
+        return;
       }
       statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(keep this tab open)`;
-      if (nextEvent) {
-        const s  = Math.max(0, Math.floor((nextEvent.dt.toMillis() - now().toMillis()) / 1000));
-        const hh = String(Math.floor(s / 3600)).padStart(2, "0");
-        const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
-        const ss = String(s % 60).padStart(2, "0");
-        nextLineEl.textContent = `Next: ${nextEvent.name} at ${fmt(nextEvent.dt)} (${ZONE})  |  in ${hh}:${mm}:${ss}`;
-      }
     }
 
     async function triggerIfDue() {
