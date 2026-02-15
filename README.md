@@ -53,6 +53,28 @@ audio: {
 },
 ```
 
+### Developer Test Mode
+
+Use this when testing scheduled playback without waiting for real prayer times.
+
+```js
+testMode: {
+  enabled: true,
+  fajrAdhanOffsetSeconds: 30,
+  fajrIqamaOffsetSeconds: 45,
+},
+```
+
+When `enabled: true`:
+- Fajr adhan is set to now + `fajrAdhanOffsetSeconds`
+- Fajr iqama is set to now + `fajrIqamaOffsetSeconds`
+- All other prayer adhan/iqama times are forced to `00:00`
+- A large UI banner appears: `Test Mode Active: Website is being tested`
+
+Developer notes:
+- Keep this `false` in production.
+- In test mode, times are recalculated from the current moment on page load and when you tap `Enable Audio & Start`.
+
 ### Background Images
 
 ```js
