@@ -22,10 +22,15 @@ iqamaTimes: {
   Fajr:    "06:30",
   Dhuhr:   "12:45",
   Asr:     "15:30",
-  Maghrib: "18:25",
+  // Maghrib: auto-calculated (adhan + 5 min)
   Isha:    "19:15",
 },
+
+// To change the Maghrib offset (default is 5 minutes after adhan):
+maghribOffsetMinutes: 5,
 ```
+
+> **Note:** Maghrib iqama is automatically calculated as the ISNA Maghrib adhan time + 5 minutes. You don't need to set it manually — it updates daily with sunset.
 
 ### Add a Daily Aya or Hadith
 
@@ -84,10 +89,14 @@ GitHub Pages will automatically redeploy within a minute or two.
 
 ## Features
 
+- **ISNA adhan times** fetched daily from [AlAdhan.com](https://aladhan.com) API
+- **Maghrib iqama auto-calculated** (adhan + 5 min, follows sunset daily)
 - Plays full iqama or short notification at each prayer time
 - **Skip** button to stop audio once it starts playing
 - **Short notification** toggle (remembered across sessions)
 - Daily aya and hadith (date-specific or default)
+- **Directions slider** with step-by-step photos to find the room
+- Random background image on each page load
 - Location link to Google Maps
 - "Last updated" date for iqama times
 - All times shown in Toronto timezone
