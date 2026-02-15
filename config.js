@@ -33,11 +33,11 @@ const CONFIG = {
   // Maghrib is AUTO-CALCULATED: adhan time + maghribOffsetMinutes.
   // (So no need to set Maghrib here — it changes daily with sunset.)
   iqamaTimes: {
-    Fajr:    "05:45",
-    Dhuhr:   "13:30",
-    Asr:     "16:45",
+    Fajr:    "6:30",
+    Dhuhr:   "12:45",
+    Asr:     "15:30",
     // Maghrib: auto-calculated (see maghribOffsetMinutes below)
-    Isha:    "20:00",
+    Isha:    "19:15",
   },
 
   // Minutes after Maghrib adhan for Maghrib iqama
