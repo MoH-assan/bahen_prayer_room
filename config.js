@@ -88,7 +88,7 @@ const CONFIG = {
   lateGraceSeconds: 120,
 
   testMode: {
-    enabled: true,
+    enabled: false,
     fajrAdhanOffsetSeconds: 30,
     fajrIqamaOffsetSeconds: 45,
   },
