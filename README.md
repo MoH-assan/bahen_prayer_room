@@ -3,6 +3,8 @@
 A self-hosted iqama reminder for the Bahen Centre prayer room at the University of Toronto.
 
 > **Note:** This is not an official page. It is not affiliated with the MSA or the University of Toronto. Currently in **beta**.
+>
+> **Compatibility:** Tested only on Microsoft Edge on Windows 11.
 
 **Live site:** https://moh-assan.github.io/bahen_prayer_room/
 

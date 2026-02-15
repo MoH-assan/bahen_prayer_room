@@ -354,6 +354,7 @@
         <button class="btn-secondary" id="testShortBtn">&#9835; Test Short</button>
       </div>
       <p id="status">Not running.</p>
+      <p class="muted" style="margin-top:8px;">Tested only on Microsoft Edge on Windows 11.</p>
       <div id="snoozeBar">
         <span class="snooze-text" id="snoozeText">Playing...</span>
         <button class="btn-warn" id="snoozeBtn">Skip</button>
@@ -368,7 +369,7 @@
 
       <!-- Countdown to next iqama -->
       <div class="countdown" id="countdownBox">
-        <div class="countdown-label" id="countdownLabel">Next iqama</div>
+        <div class="countdown-label" id="countdownLabel">Next Iqama</div>
         <div class="countdown-timer" id="countdownTimer">--:--:--</div>
       </div>
 
@@ -659,7 +660,8 @@
     function eventDateTime(hhmm, refNow) {
       const { h, m } = parseHHMM(hhmm);
       let dt = refNow.set({ hour: h, minute: m, second: 0, millisecond: 0 });
-      if (dt <= refNow) dt = dt.plus({ days: 1 });
+      // Keep recently passed events inside the grace window for delayed timers.
+      if (dt < refNow.minus({ seconds: GRACE_SEC })) dt = dt.plus({ days: 1 });
       return dt;
     }
 
@@ -714,7 +716,7 @@
       const ss = String(totalSec % 60).padStart(2, "0");
       const totalMin = totalSec / 60;
 
-      countdownLabel.textContent = `Next: ${next.name} at ${next.dt.toFormat("h:mm a")}`;
+      countdownLabel.textContent = `Next Iqama: ${next.name} at ${next.dt.toFormat("h:mm a")}`;
       countdownTimer.textContent = `${hh}:${mm}:${ss}`;
 
       // Color based on proximity
@@ -744,6 +746,11 @@
     async function triggerIfDue() {
       if (!running || !nextEvent || nextEvent.fired) return;
       const diff = (now().toMillis() - nextEvent.dt.toMillis()) / 1000;
+      if (diff > GRACE_SEC) {
+        // Skip stale event and continue to upcoming events.
+        scheduleNext();
+        return;
+      }
       if (diff >= 0 && diff <= GRACE_SEC) {
         nextEvent.fired = true;
         try {
