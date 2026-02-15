@@ -143,6 +143,26 @@
     .switch input:checked + .toggle-slider          { background: var(--accent); }
     .switch input:checked + .toggle-slider::before   { transform: translateX(20px); }
 
+    /* Volume slider */
+    .volume-row {
+      display: flex; align-items: center; gap: 10px;
+      margin-top: 12px; font-size: 0.85rem; color: var(--muted);
+    }
+    .volume-row label { flex-shrink: 0; font-weight: 600; }
+    .volume-row input[type="range"] {
+      flex: 1; height: 6px; -webkit-appearance: none; appearance: none;
+      background: var(--border); border-radius: 3px; outline: none;
+    }
+    .volume-row input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none; width: 18px; height: 18px;
+      background: var(--accent); border-radius: 50%; cursor: pointer;
+    }
+    .volume-row input[type="range"]::-moz-range-thumb {
+      width: 18px; height: 18px; background: var(--accent);
+      border-radius: 50%; border: none; cursor: pointer;
+    }
+    .volume-pct { min-width: 32px; text-align: right; }
+
     #status    { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
     #nextLine  { font-size: 0.95rem; font-weight: 500; margin-top: 6px; min-height: 1.4em; }
 
@@ -265,6 +285,15 @@
         </label>
         <label for="shortToggle">Short notification (instead of full iqama)</label>
       </div>
+      <div class="volume-row">
+        <label for="volumeSlider">Volume</label>
+        <input type="range" id="volumeSlider" min="0" max="100" value="80" />
+        <span class="volume-pct" id="volumePct">80%</span>
+      </div>
+      <div class="controls" style="margin-top:12px;">
+        <button class="btn-secondary" id="testShortBtn">&#9835; Test Short</button>
+        <button class="btn-secondary" id="testFullBtn">&#9835; Test Full Iqama</button>
+      </div>
       <p id="status">Not running.</p>
       <p id="nextLine"></p>
       <div id="snoozeBar">
@@ -303,9 +332,7 @@
         <li>Toggle <strong>"Short notification"</strong> if you prefer a brief alert instead of the full iqama audio.</li>
         <li>Tap <strong>"Stop"</strong> to disable the reminder at any time.</li>
       </ol>
-      <div class="test-btn-row">
-        <button class="btn-secondary" id="testSoundBtn">&#9835; Test Short Notification</button>
-      </div>
+      <p class="muted">Use the volume slider and test buttons in the controls above to preview sounds.</p>
     </div>
 
     <!-- Aya of the Day -->
@@ -562,16 +589,39 @@
     function start() { running = true; localStorage.setItem("iqama_reminder_enabled", "1"); scheduleNext(); }
     function stop()  { running = false; nextEvent = null; clearTimers(); stopAudio(); localStorage.removeItem("iqama_reminder_enabled"); updateUI(); }
 
+    // ── Volume ─────────────────────────────────────────────────
+    const volumeSlider = $("volumeSlider");
+    const volumePct    = $("volumePct");
+
+    // Restore saved volume
+    const savedVol = localStorage.getItem("iqama_volume");
+    if (savedVol !== null) { volumeSlider.value = savedVol; }
+    audioEl.volume = volumeSlider.value / 100;
+    volumePct.textContent = volumeSlider.value + "%";
+
+    volumeSlider.addEventListener("input", () => {
+      const v = volumeSlider.value;
+      audioEl.volume = v / 100;
+      volumePct.textContent = v + "%";
+      localStorage.setItem("iqama_volume", v);
+    });
+
     // ── Events ────────────────────────────────────────────────
     enableBtn.addEventListener("click", async () => {
       try { await play("default"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
       start();
     });
     stopBtn.addEventListener("click", stop);
-    $("testSoundBtn").addEventListener("click", async () => {
+
+    $("testShortBtn").addEventListener("click", async () => {
       audioEl.src = AUDIO.short || "./short.mp3";
       audioEl.currentTime = 0;
-      try { await audioEl.play(); } catch {}
+      try { await audioEl.play(); showSnooze("Short test"); } catch {}
+    });
+    $("testFullBtn").addEventListener("click", async () => {
+      audioEl.src = AUDIO.default || "./eqamah.mp3";
+      audioEl.currentTime = 0;
+      try { await audioEl.play(); showSnooze("Full iqama test"); } catch {}
     });
 
     // ── Background ────────────────────────────────────────────
