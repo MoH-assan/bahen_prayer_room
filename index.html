@@ -94,6 +94,26 @@
       border-bottom-style: solid;
     }
 
+    .test-mode-banner {
+      display: none;
+      margin: 12px 0 16px;
+      padding: 14px 16px;
+      border-radius: 12px;
+      border: 2px solid #b00020;
+      background: #ffe9ec;
+      color: #8b0017;
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      text-align: center;
+      text-transform: uppercase;
+      box-shadow: 0 2px 10px rgba(139, 0, 23, 0.12);
+    }
+
+    .test-mode-banner.visible {
+      display: block;
+    }
+
     /* ── Cards ──────────────────────────────────────────────── */
     .card {
       border: 1px solid var(--border);
@@ -323,6 +343,10 @@
       <a id="locationLink" class="location-link" target="_blank" rel="noopener"></a>
     </header>
 
+    <div id="testModeBanner" class="test-mode-banner">
+      Test Mode Active: Website is being tested
+    </div>
+
     <!-- Controls -->
     <div class="card glass">
       <div class="controls">
@@ -475,6 +499,10 @@
     const GRACE_SEC       = CONFIG.lateGraceSeconds;
     const MAGHRIB_OFFSET  = CONFIG.maghribOffsetMinutes || 5;
     const API             = CONFIG.adhanApi || {};
+    const TEST_MODE       = CONFIG.testMode || {};
+    const TEST_ENABLED    = TEST_MODE.enabled === true;
+    const TEST_ADHAN_SEC  = Number.isFinite(TEST_MODE.fajrAdhanOffsetSeconds) ? TEST_MODE.fajrAdhanOffsetSeconds : 30;
+    const TEST_IQAMA_SEC  = Number.isFinite(TEST_MODE.fajrIqamaOffsetSeconds) ? TEST_MODE.fajrIqamaOffsetSeconds : 45;
     const PRAYER_ORDER    = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
     let adhanTimes = {};
@@ -494,25 +522,59 @@
     const hadithBox   = $("hadithBox");
     const audioEl     = $("adhan");
     const locationEl  = $("locationLink");
+    const testModeBanner = $("testModeBanner");
     const snoozeBar   = $("snoozeBar");
     const snoozeText  = $("snoozeText");
     const snoozeBtn   = $("snoozeBtn");
 
     let running = false, nextEvent = null, timeoutId = null, watchdogId = null;
+    let playingLabel = "";
+    let stickyStatus = "";
+    let stickyUntil = 0;
 
     // ── Helpers ───────────────────────────────────────────────
     const now   = () => DateTime.now().setZone(ZONE);
     const fmt   = dt => dt.toFormat("yyyy-LL-dd HH:mm:ss");
 
     function parseHHMM(s) {
-      const [h, m] = s.split(":").map(Number);
-      return { h, m };
+      const [h, m, sec] = String(s).split(":").map(Number);
+      return { h, m, s: Number.isFinite(sec) ? sec : 0 };
     }
 
     function addMinutes(hhmm, mins) {
-      const { h, m } = parseHHMM(hhmm);
-      return DateTime.fromObject({ hour: h, minute: m }, { zone: ZONE })
+      const { h, m, s } = parseHHMM(hhmm);
+      return DateTime.fromObject({ hour: h, minute: m, second: s }, { zone: ZONE })
         .plus({ minutes: mins }).toFormat("HH:mm");
+    }
+
+    function formatClock(dt) {
+      return dt.toFormat("HH:mm:ss");
+    }
+
+    function applyTestModeTimes() {
+      if (!TEST_ENABLED) return false;
+      const base = now();
+      const fajrAdhan = base.plus({ seconds: TEST_ADHAN_SEC });
+      const fajrIqama = base.plus({ seconds: TEST_IQAMA_SEC });
+
+      adhanTimes = {
+        Fajr: formatClock(fajrAdhan),
+        Dhuhr: "00:00",
+        Asr: "00:00",
+        Maghrib: "00:00",
+        Isha: "00:00",
+      };
+
+      IQAMA_TIMES.Fajr = formatClock(fajrIqama);
+      IQAMA_TIMES.Dhuhr = "00:00";
+      IQAMA_TIMES.Asr = "00:00";
+      IQAMA_TIMES.Maghrib = "00:00";
+      IQAMA_TIMES.Isha = "00:00";
+
+      adhanSrcEl.textContent = `TEST MODE: Fajr Adhan +${TEST_ADHAN_SEC}s, Fajr Iqama +${TEST_IQAMA_SEC}s. Other prayers set to 00:00.`;
+      if (testModeBanner) testModeBanner.classList.add("visible");
+      $("todayDate").innerHTML = `${base.toFormat("EEEE, LLLL d, yyyy")} &mdash; Testing mode`;
+      return true;
     }
 
     // ── Audio selection persistence ─────────────────────────
@@ -553,6 +615,8 @@
 
     // ── Fetch ISNA adhan times ────────────────────────────────
     async function fetchAdhanTimes() {
+      if (applyTestModeTimes()) return;
+
       try {
         const d    = now();
         const url  = `https://api.aladhan.com/v1/timingsByCity/${d.toFormat("dd-LL-yyyy")}` +
@@ -615,7 +679,10 @@
 
     // ── Audio ─────────────────────────────────────────────────
     function isValidHHMM(value) {
-      return typeof value === "string" && /^\d{1,2}:\d{2}$/.test(value);
+      if (typeof value !== "string" || !/^\d{1,2}:\d{2}(:\d{2})?$/.test(value)) return false;
+      const { h, m, s } = parseHHMM(value);
+      return Number.isInteger(h) && Number.isInteger(m) && Number.isInteger(s) &&
+             h >= 0 && h <= 23 && m >= 0 && m <= 59 && s >= 0 && s <= 59;
     }
 
     function sourceForEventType(eventType) {
@@ -629,21 +696,49 @@
       return `${evt.prayer} ${kind}`;
     }
 
+    function setStickyStatus(html, ms = 12000) {
+      stickyStatus = html;
+      stickyUntil = Date.now() + ms;
+      statusEl.innerHTML = html;
+    }
+
+    function clearStickyStatus() {
+      stickyStatus = "";
+      stickyUntil = 0;
+    }
+
+    function audioErrorMessage(err) {
+      const name = err?.name || "Error";
+      if (name === "NotAllowedError") return 'Audio blocked by browser - tap "Enable Audio & Start" once.';
+      if (name === "NotSupportedError") return "Audio file could not be played (unsupported or missing file).";
+      if (name === "AbortError") return "Audio playback was interrupted.";
+      return `Audio playback failed (${name}).`;
+    }
+
     async function playSource(src) {
       if (audioEl.src !== new URL(src, location.href).href) audioEl.src = src;
+      audioEl.muted = false;
       audioEl.currentTime = 0;
       await audioEl.play();
     }
 
     async function playEvent(evt) {
-      showSnooze(labelForEvent(evt));
+      const label = labelForEvent(evt);
       await playSource(sourceForEventType(evt.type));
+      playingLabel = label;
+      showSnooze(label);
+      clearStickyStatus();
     }
 
     // Hide the playing bar when one clip finishes
-    audioEl.addEventListener("ended", () => { hideSnooze(); });
+    audioEl.addEventListener("ended", () => { playingLabel = ""; hideSnooze(); });
 
-    function stopAudio() { audioEl.pause(); audioEl.currentTime = 0; hideSnooze(); }
+    function stopAudio() {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      playingLabel = "";
+      hideSnooze();
+    }
 
     // ── Snooze bar ────────────────────────────────────────────
     function showSnooze(name) { snoozeText.textContent = `Playing ${name}...`; snoozeBar.classList.add("visible"); }
@@ -658,8 +753,8 @@
     }
 
     function eventDateTime(hhmm, refNow) {
-      const { h, m } = parseHHMM(hhmm);
-      let dt = refNow.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+      const { h, m, s } = parseHHMM(hhmm);
+      let dt = refNow.set({ hour: h, minute: m, second: s, millisecond: 0 });
       // Keep recently passed events inside the grace window for delayed timers.
       if (dt < refNow.minus({ seconds: GRACE_SEC })) dt = dt.plus({ days: 1 });
       return dt;
@@ -701,8 +796,8 @@
       const next = Object.entries(IQAMA_TIMES)
         .filter(([k]) => PRAYER_ORDER.includes(k))
         .map(([name, hhmm]) => {
-          const { h, m } = parseHHMM(hhmm);
-          let dt = n.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+          const { h, m, s } = parseHHMM(hhmm);
+          let dt = n.set({ hour: h, minute: m, second: s, millisecond: 0 });
           if (dt <= n) dt = dt.plus({ days: 1 });
           return { name, dt };
         })
@@ -732,6 +827,15 @@
     updateClock();
 
     function updateUI() {
+      if (stickyStatus && Date.now() < stickyUntil) {
+        statusEl.innerHTML = stickyStatus;
+        return;
+      }
+      if (stickyStatus && Date.now() >= stickyUntil) clearStickyStatus();
+      if (playingLabel && !audioEl.paused) {
+        statusEl.innerHTML = `<span class="status-running">&#9679;</span> Playing <b>${playingLabel}</b>`;
+        return;
+      }
       if (!running) {
         statusEl.innerHTML = `<span class="status-stopped">&#9679; Not running</span>`;
         return;
@@ -756,8 +860,11 @@
         try {
           await playEvent(nextEvent);
           statusEl.innerHTML = `<span class="status-running">&#9679;</span> Playing <b>${labelForEvent(nextEvent)}</b>`;
-        } catch {
-          statusEl.innerHTML = `<span class="status-stopped">&#9679;</span> Audio blocked — tap "Enable Audio & Start" again.`;
+        } catch (err) {
+          stopAudio();
+          setStickyStatus(`<span class="status-stopped">&#9679;</span> ${audioErrorMessage(err)} Ensure this tab is not muted.`);
+          console.warn("Scheduled audio playback failed:", err);
+          return;
         } finally { scheduleNext(); }
       }
     }
@@ -777,7 +884,15 @@
       watchdogId = setInterval(() => { updateUI(); triggerIfDue(); }, 1000);
     }
 
-    function start() { running = true; localStorage.setItem("iqama_reminder_enabled", "1"); scheduleNext(); }
+    function start() {
+      if (applyTestModeTimes()) {
+        buildTimesTable();
+        updateCountdown();
+      }
+      running = true;
+      localStorage.setItem("iqama_reminder_enabled", "1");
+      scheduleNext();
+    }
     function stop()  { running = false; nextEvent = null; clearTimers(); stopAudio(); localStorage.removeItem("iqama_reminder_enabled"); updateUI(); }
 
     // ── Volume ─────────────────────────────────────────────────
@@ -799,13 +914,30 @@
 
     // ── Events ────────────────────────────────────────────────
     enableBtn.addEventListener("click", async () => {
-      try { await playSource(AUDIO.short || "./short.mp3"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
+      try {
+        await playSource(AUDIO.short || "./short.mp3");
+        audioEl.pause();
+        audioEl.currentTime = 0;
+        clearStickyStatus();
+      } catch (err) {
+        setStickyStatus(`<span class="status-stopped">&#9679;</span> ${audioErrorMessage(err)} Ensure this tab is not muted.`);
+        console.warn("Audio unlock failed:", err);
+      }
       start();
     });
     stopBtn.addEventListener("click", stop);
 
     async function testAudio(src, label) {
-      try { await playSource(src); showSnooze(label); } catch {}
+      try {
+        await playSource(src);
+        playingLabel = label;
+        showSnooze(label);
+        clearStickyStatus();
+      } catch (err) {
+        stopAudio();
+        setStickyStatus(`<span class="status-stopped">&#9679;</span> ${audioErrorMessage(err)} Ensure this tab is not muted.`);
+        console.warn("Test audio failed:", err);
+      }
     }
     $("testAdhanBtn").addEventListener("click", () => testAudio(AUDIO.adhan || "./adhan.mp3", "Adhan test"));
     $("testIqamaBtn").addEventListener("click", () => testAudio(AUDIO.iqama || "./eqamah.mp3", "Iqama test"));
@@ -873,8 +1005,7 @@
       updateUI();
 
       if (localStorage.getItem("iqama_reminder_enabled") === "1") {
-        running = true;
-        scheduleNext();
+        start();
         if (nextEvent) {
           statusEl.innerHTML = `<span class="status-running">&#9679; Running</span> &nbsp;(if sound doesn't play, tap Enable once)`;
         }

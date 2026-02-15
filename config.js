@@ -86,4 +86,10 @@ const CONFIG = {
   // ── Advanced ──────────────────────────────────────────────
   // Grace window (seconds) for late triggers due to tab throttling.
   lateGraceSeconds: 120,
+
+  testMode: {
+    enabled: true,
+    fajrAdhanOffsetSeconds: 30,
+    fajrIqamaOffsetSeconds: 45,
+  },
 };
