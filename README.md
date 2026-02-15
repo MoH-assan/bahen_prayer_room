@@ -19,11 +19,11 @@ Open `config.js` and edit the `iqamaTimes` object (24-hour format).
 lastUpdated: "2026-02-15",
 
 iqamaTimes: {
-  Fajr:    "06:00",
-  Dhuhr:   "13:30",
-  Asr:     "16:30",
+  Fajr:    "06:30",
+  Dhuhr:   "12:45",
+  Asr:     "15:30",
   Maghrib: "18:25",
-  Isha:    "20:15",
+  Isha:    "19:15",
 },
 ```
 
