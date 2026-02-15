@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Bahen Prayer Room — Prayer Reminder</title>
+  <title>Bahen Prayer Room — Iqama Reminder</title>
   <style>
     :root {
       --bg: #f8f9fa;
@@ -14,6 +14,8 @@
       --accent-light: #e8f5e9;
       --border: #dee2e6;
       --radius: 14px;
+      --warn: #e67e22;
+      --danger: #c0392b;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -45,6 +47,17 @@
       color: var(--muted);
       font-size: 0.9rem;
       margin-top: 4px;
+    }
+    header .location-link {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: 0.85rem;
+      color: var(--accent);
+      text-decoration: none;
+      border-bottom: 1px dashed var(--accent);
+    }
+    header .location-link:hover {
+      border-bottom-style: solid;
     }
 
     .card {
@@ -93,6 +106,37 @@
     }
     .btn-secondary:hover { background: #e9ecef; }
 
+    .btn-warn {
+      background: var(--warn);
+      color: #fff;
+    }
+    .btn-warn:hover { background: #cf6d17; }
+
+    .btn-danger {
+      background: var(--danger);
+      color: #fff;
+    }
+    .btn-danger:hover { background: #a93226; }
+
+    #snoozeBar {
+      display: none;
+      margin-top: 12px;
+      padding: 12px 16px;
+      background: #fff3e0;
+      border-radius: 10px;
+      border: 1px solid var(--warn);
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    #snoozeBar.visible { display: flex; }
+    #snoozeBar .snooze-text {
+      flex: 1;
+      font-weight: 600;
+      font-size: 0.95rem;
+      min-width: 120px;
+    }
+
     #status {
       color: var(--muted);
       font-size: 0.9rem;
@@ -104,6 +148,48 @@
       margin-top: 6px;
       min-height: 1.4em;
     }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 12px;
+      font-size: 0.9rem;
+    }
+    .toggle-row label {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    /* Toggle switch */
+    .switch {
+      position: relative;
+      width: 44px;
+      height: 24px;
+      flex-shrink: 0;
+    }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      inset: 0;
+      background: #ccc;
+      border-radius: 24px;
+      transition: 0.3s;
+    }
+    .slider::before {
+      content: "";
+      position: absolute;
+      height: 18px;
+      width: 18px;
+      left: 3px;
+      bottom: 3px;
+      background: #fff;
+      border-radius: 50%;
+      transition: 0.3s;
+    }
+    .switch input:checked + .slider { background: var(--accent); }
+    .switch input:checked + .slider::before { transform: translateX(20px); }
 
     table {
       width: 100%;
@@ -121,7 +207,7 @@
     tr:last-child td { border-bottom: none; }
 
     .ok  { color: var(--accent); font-weight: 700; }
-    .bad { color: #c0392b; font-weight: 700; }
+    .bad { color: var(--danger); font-weight: 700; }
 
     .content-block {
       padding: 12px 16px;
@@ -132,6 +218,13 @@
     .content-block b { display: block; margin-bottom: 4px; }
 
     .muted { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
+
+    .last-updated {
+      color: var(--muted);
+      font-size: 0.78rem;
+      margin-top: 4px;
+      font-style: italic;
+    }
 
     code {
       background: #f1f3f5;
@@ -152,7 +245,8 @@
   <div class="container">
     <header>
       <h1>Bahen Prayer Room</h1>
-      <div class="subtitle">Prayer Reminder &middot; Toronto</div>
+      <div class="subtitle">Iqama Reminder &middot; Toronto</div>
+      <a id="locationLink" class="location-link" target="_blank" rel="noopener"></a>
     </header>
 
     <!-- Controls -->
@@ -161,14 +255,30 @@
         <button class="btn-primary" id="enableBtn">Enable Audio &amp; Start</button>
         <button class="btn-secondary" id="stopBtn">Stop</button>
       </div>
+
+      <div class="toggle-row">
+        <span class="switch">
+          <input type="checkbox" id="shortToggle" />
+          <span class="slider"></span>
+        </span>
+        <label for="shortToggle">Short notification (instead of full iqama)</label>
+      </div>
+
       <p id="status">Not running.</p>
       <p id="nextLine"></p>
+
+      <!-- Snooze bar — shown when audio is playing -->
+      <div id="snoozeBar">
+        <span class="snooze-text" id="snoozeText">Playing...</span>
+        <button class="btn-warn" id="snoozeBtn">Skip</button>
+      </div>
     </div>
 
     <!-- Iqama Times -->
     <div class="card">
-      <h3>Iqama Times</h3>
+      <h3>Iqama Times (Toronto Time)</h3>
       <table id="timesTable"></table>
+      <p class="last-updated" id="lastUpdated"></p>
       <p class="muted">Update times in <code>config.js</code></p>
     </div>
 
@@ -201,22 +311,28 @@
     const { DateTime } = luxon;
 
     // Read from CONFIG (loaded from config.js)
-    const ZONE              = CONFIG.timezone;
-    const IQAMA_TIMES       = CONFIG.iqamaTimes;
-    const AUDIO_BY_PRAYER   = CONFIG.audio;
-    const DAILY_AYA         = CONFIG.dailyAya;
-    const DAILY_HADITH      = CONFIG.dailyHadith;
+    const ZONE               = CONFIG.timezone;
+    const IQAMA_TIMES        = CONFIG.iqamaTimes;
+    const AUDIO_BY_PRAYER    = CONFIG.audio;
+    const DAILY_AYA          = CONFIG.dailyAya;
+    const DAILY_HADITH       = CONFIG.dailyHadith;
     const LATE_GRACE_SECONDS = CONFIG.lateGraceSeconds;
 
     // DOM refs
-    const enableBtn  = document.getElementById("enableBtn");
-    const stopBtn    = document.getElementById("stopBtn");
-    const statusEl   = document.getElementById("status");
-    const nextLineEl = document.getElementById("nextLine");
-    const timesTable = document.getElementById("timesTable");
-    const ayaBox     = document.getElementById("ayaBox");
-    const hadithBox  = document.getElementById("hadithBox");
-    const audioEl    = document.getElementById("adhan");
+    const enableBtn    = document.getElementById("enableBtn");
+    const stopBtn      = document.getElementById("stopBtn");
+    const shortToggle  = document.getElementById("shortToggle");
+    const statusEl     = document.getElementById("status");
+    const nextLineEl   = document.getElementById("nextLine");
+    const timesTable   = document.getElementById("timesTable");
+    const lastUpdEl    = document.getElementById("lastUpdated");
+    const ayaBox       = document.getElementById("ayaBox");
+    const hadithBox    = document.getElementById("hadithBox");
+    const audioEl      = document.getElementById("adhan");
+    const locationLink = document.getElementById("locationLink");
+    const snoozeBar    = document.getElementById("snoozeBar");
+    const snoozeText   = document.getElementById("snoozeText");
+    const snoozeBtn    = document.getElementById("snoozeBtn");
 
     let running    = false;
     let nextEvent  = null;   // { name, dt, fired }
@@ -237,6 +353,16 @@
       return { hh, mm };
     }
 
+    // ── Short mode persistence ──────────────────────────────
+    function isShortMode() {
+      return shortToggle.checked;
+    }
+
+    shortToggle.checked = localStorage.getItem("iqama_short_mode") === "1";
+    shortToggle.addEventListener("change", () => {
+      localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0");
+    });
+
     // ── Build UI ────────────────────────────────────────────
     function buildTimesTable() {
       timesTable.innerHTML = "";
@@ -245,6 +371,21 @@
         tr.innerHTML = `<td>${name}</td><td>${hhmm}</td>`;
         timesTable.appendChild(tr);
       });
+    }
+
+    function setLastUpdated() {
+      if (CONFIG.lastUpdated) {
+        lastUpdEl.textContent = `Last updated: ${CONFIG.lastUpdated}`;
+      }
+    }
+
+    function setLocation() {
+      if (CONFIG.location && CONFIG.location.name) {
+        locationLink.textContent = CONFIG.location.name;
+        locationLink.href = CONFIG.location.mapsUrl || "#";
+      } else {
+        locationLink.style.display = "none";
+      }
     }
 
     function setTodaysText() {
@@ -271,12 +412,45 @@
       return { ...candidates[0], fired: false };
     }
 
+    function getAudioSrc(prayerName) {
+      if (isShortMode()) {
+        return AUDIO_BY_PRAYER.short || "./short.mp3";
+      }
+      return AUDIO_BY_PRAYER[prayerName] || AUDIO_BY_PRAYER.default || "./eqamah.mp3";
+    }
+
     async function playForPrayer(prayerName) {
-      const src = AUDIO_BY_PRAYER[prayerName] || AUDIO_BY_PRAYER.default || "./adhan.mp3";
+      const src = getAudioSrc(prayerName);
       if (audioEl.src !== new URL(src, location.href).href) audioEl.src = src;
       audioEl.currentTime = 0;
       await audioEl.play();
     }
+
+    function stopAudio() {
+      audioEl.pause();
+      audioEl.currentTime = 0;
+      hideSnoozeBar();
+    }
+
+    // ── Snooze / Skip ───────────────────────────────────────
+    function showSnoozeBar(prayerName) {
+      snoozeText.textContent = `Playing ${prayerName}...`;
+      snoozeBar.classList.add("visible");
+    }
+
+    function hideSnoozeBar() {
+      snoozeBar.classList.remove("visible");
+    }
+
+    snoozeBtn.addEventListener("click", () => {
+      stopAudio();
+      statusEl.innerHTML = `Skipped <span class="ok">&#10003;</span>`;
+    });
+
+    // Auto-hide snooze bar when audio ends naturally
+    audioEl.addEventListener("ended", () => {
+      hideSnoozeBar();
+    });
 
     function clearTimers() {
       if (timeoutId)  { clearTimeout(timeoutId);   timeoutId  = null; }
@@ -285,7 +459,7 @@
 
     function updateUI() {
       if (!running) {
-        statusEl.innerHTML   = "Not running.";
+        statusEl.innerHTML     = "Not running.";
         nextLineEl.textContent = "";
         return;
       }
@@ -312,7 +486,8 @@
         nextEvent.fired = true;
         try {
           await playForPrayer(nextEvent.name);
-          statusEl.innerHTML = `Played for <b>${nextEvent.name}</b> <span class="ok">&#10003;</span>`;
+          showSnoozeBar(nextEvent.name);
+          statusEl.innerHTML = `Playing <b>${nextEvent.name}</b> <span class="ok">&#10003;</span>`;
         } catch (e) {
           statusEl.innerHTML =
             `Audio blocked <span class="bad">&#10008;</span> — tap "Enable Audio & Start" again.`;
@@ -336,7 +511,7 @@
 
     async function start() {
       running = true;
-      localStorage.setItem("prayer_reminder_enabled", "1");
+      localStorage.setItem("iqama_reminder_enabled", "1");
       scheduleNext();
     }
 
@@ -344,7 +519,8 @@
       running   = false;
       nextEvent = null;
       clearTimers();
-      localStorage.removeItem("prayer_reminder_enabled");
+      stopAudio();
+      localStorage.removeItem("iqama_reminder_enabled");
       updateUI();
     }
 
@@ -358,10 +534,16 @@
 
     // ── Init ────────────────────────────────────────────────
     buildTimesTable();
+    setLastUpdated();
+    setLocation();
     setTodaysText();
     updateUI();
 
-    if (localStorage.getItem("prayer_reminder_enabled") === "1") {
+    if (localStorage.getItem("iqama_reminder_enabled") === "1" ||
+        localStorage.getItem("prayer_reminder_enabled") === "1") {
+      // Migrate old key
+      localStorage.removeItem("prayer_reminder_enabled");
+      localStorage.setItem("iqama_reminder_enabled", "1");
       running = true;
       scheduleNext();
       statusEl.innerHTML =

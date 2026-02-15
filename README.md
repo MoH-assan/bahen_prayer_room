@@ -1,6 +1,6 @@
-# Bahen Prayer Room — Prayer Reminder
+# Bahen Prayer Room — Iqama Reminder
 
-A simple, self-hosted prayer reminder for the Bahen Centre prayer room at the University of Toronto. Plays the adhan at iqama times and displays a daily aya and hadith.
+A simple, self-hosted iqama reminder for the Bahen Centre prayer room at the University of Toronto. Plays the iqama (or a short notification) at scheduled times and displays a daily aya and hadith.
 
 **Live site:** https://moh-assan.github.io/bahen_prayer_room/
 
@@ -12,9 +12,12 @@ All configuration lives in **`config.js`** — no need to touch `index.html`.
 
 ### Change Iqama Times
 
-Open `config.js` and edit the `iqamaTimes` object (24-hour format):
+Open `config.js` and edit the `iqamaTimes` object (24-hour format).
+**Remember to update `lastUpdated` too** so visitors know the times are current:
 
 ```js
+lastUpdated: "2026-02-15",
+
 iqamaTimes: {
   Fajr:    "06:00",
   Dhuhr:   "13:30",
@@ -38,16 +41,32 @@ dailyAya: {
 
 The site checks today's date (Toronto time) and falls back to `"default"` if no entry matches.
 
-### Replace the Adhan Audio
+### Replace the Audio Files
 
-1. Add your `.mp3` file to the repo (e.g., `my-adhan.mp3`).
-2. In `config.js`, update the `audio.default` path:
+There are two audio modes:
+- **Full iqama** — plays `eqamah.mp3` (default)
+- **Short notification** — plays `short.mp3` (toggled by the user on the page)
+
+To replace either:
+1. Add your `.mp3` file to the repo.
+2. In `config.js`, update the path:
    ```js
    audio: {
-     default: "./my-adhan.mp3",
+     default: "./my-iqama.mp3",
+     short:   "./my-beep.mp3",
    },
    ```
-3. You can also set different audio per prayer by uncommenting and editing the individual lines.
+
+### Change the Location
+
+Edit the `location` object in `config.js`:
+
+```js
+location: {
+  name: "Bahen Centre, 40 St. George St",
+  mapsUrl: "https://maps.google.com/?q=...",
+},
+```
 
 ### Deploy Changes
 
@@ -63,13 +82,27 @@ GitHub Pages will automatically redeploy within a minute or two.
 
 ---
 
+## Features
+
+- Plays full iqama or short notification at each prayer time
+- **Skip** button to stop audio once it starts playing
+- **Short notification** toggle (remembered across sessions)
+- Daily aya and hadith (date-specific or default)
+- Location link to Google Maps
+- "Last updated" date for iqama times
+- All times shown in Toronto timezone
+
+---
+
 ## Files
 
 | File | Purpose |
 |------|---------|
-| `index.html` | Main page (HTML + JS logic) |
-| `config.js` | All editable settings (times, content, audio) |
-| `adhan.mp3` | Default adhan audio |
+| `index.html` | Main page (HTML + CSS + JS logic) |
+| `config.js` | All editable settings (times, content, audio, location) |
+| `eqamah.mp3` | Full iqama audio |
+| `short.mp3` | Short notification audio |
+| `adhan.mp3` | Backup adhan audio |
 | `README.md` | This file |
 
 ---
@@ -77,7 +110,7 @@ GitHub Pages will automatically redeploy within a minute or two.
 ## Custom Domain (Optional)
 
 1. Buy a domain (e.g., from Namecheap, Google Domains).
-2. In your domain's DNS settings, add a CNAME record pointing to `YOUR_USERNAME.github.io`.
+2. In your domain's DNS settings, add a CNAME record pointing to `moh-assan.github.io`.
 3. In the GitHub repo: Settings > Pages > Custom domain — enter your domain.
 4. GitHub will create a `CNAME` file in the repo automatically.
 
@@ -85,5 +118,5 @@ GitHub Pages will automatically redeploy within a minute or two.
 
 ## Credits
 
-- Adhan audio: [AlAdhan.com](https://aladhan.com/download-adhans) (Mishary Rashid Alafasy)
+- Adhan audio: [AlAdhan.com](https://aladhan.com/download-adhans)
 - Timezone handling: [Luxon](https://moment.github.io/luxon/)
