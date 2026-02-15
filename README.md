@@ -120,3 +120,5 @@ GitHub Pages will automatically redeploy within a minute or two.
 
 - Adhan audio: [AlAdhan.com](https://aladhan.com/download-adhans)
 - Timezone handling: [Luxon](https://moment.github.io/luxon/)
+- Short notification audio: [Short Notification](https://pixabay.com/sound-effects/search/notification/)
+- Background image: [Google Images](Mohamed Fazlur Rahman)
