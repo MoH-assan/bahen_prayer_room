@@ -1,175 +1,129 @@
 # Bahen Prayer Room — Iqama Reminder
 
-A self-hosted iqama reminder for the Bahen Centre prayer room at the University of Toronto. Plays the iqama (or a short notification) at scheduled times, shows ISNA adhan times, and displays a daily aya and hadith.
+A self-hosted iqama reminder for the Bahen Centre prayer room at the University of Toronto.
 
-> **Note:** This page is not official. It is not affiliated with, endorsed by, or representative of the MSA, the University of Toronto, or any official university body. This site is currently in **beta**.
+> **Note:** This is not an official page. It is not affiliated with the MSA or the University of Toronto. Currently in **beta**.
 
 **Live site:** https://moh-assan.github.io/bahen_prayer_room/
 
-**Feedback:** Submit a [GitHub issue](https://github.com/MoH-assan/bahen_prayer_room/issues), [pull request](https://github.com/MoH-assan/bahen_prayer_room/pulls), or email [m.abobaker@live.com](mailto:m.abobaker@live.com).
+**Feedback:** [GitHub Issues](https://github.com/MoH-assan/bahen_prayer_room/issues) · [Pull Requests](https://github.com/MoH-assan/bahen_prayer_room/pulls) · [m.abobaker@live.com](mailto:m.abobaker@live.com)
 
 ---
 
 ## How to Update
 
-All configuration lives in **`config.js`** — no need to touch `index.html`.
+Everything is configured in **`config.js`** — no need to edit `index.html`.
 
-### Change Iqama Times
-
-Open `config.js` and edit the `iqamaTimes` object (24-hour format).
-**Remember to update `lastUpdated` too** so visitors know the times are current:
+### Iqama Times
 
 ```js
 lastUpdated: "2026-02-15",
 
 iqamaTimes: {
-  Fajr:    "06:30",
-  Dhuhr:   "12:45",
-  Asr:     "15:30",
-  // Maghrib: auto-calculated (adhan + 5 min)
-  Isha:    "19:15",
+  Fajr:  "06:30",
+  Dhuhr: "12:45",
+  Asr:   "15:30",
+  Isha:  "19:15",
 },
 
-// To change the Maghrib offset (default is 5 minutes after adhan):
 maghribOffsetMinutes: 5,
 ```
 
-> **Note:** Maghrib iqama is automatically calculated as the ISNA Maghrib adhan time + 5 minutes. You don't need to set it manually — it updates daily with sunset.
+Maghrib iqama is auto-calculated (ISNA adhan time + 5 min). Update `lastUpdated` whenever you change times.
 
-### Add a Daily Aya or Hadith
-
-Add date-specific entries using `YYYY-MM-DD` keys:
+### Daily Aya / Hadith
 
 ```js
 dailyAya: {
   "2026-02-15": { ref: "Q 94:5-6", text: "With hardship comes ease." },
-  "2026-02-16": { ref: "Q 3:139",  text: "Do not lose heart..." },
-  "default":    { ref: "Q 2:286",  text: "Allah does not burden a soul beyond what it can bear." },
+  "default":    { ref: "Q 2:286",  text: "Allah does not burden a soul..." },
 },
 ```
 
-The site checks today's date (Toronto time) and falls back to `"default"` if no entry matches. Same format for `dailyHadith`.
+Uses today's date (Toronto time), falls back to `"default"`. Same format for `dailyHadith`.
 
-### Replace the Audio Files
-
-There are two audio modes:
-- **Full iqama** — plays `eqamah.mp3` (default)
-- **Short notification** — plays `short.mp3` (toggled by the user on the page)
-
-To replace either:
-1. Add your `.mp3` file to the repo.
-2. In `config.js`, update the path:
+### Audio
 
 ```js
 audio: {
-  default: "./my-iqama.mp3",
-  short:   "./my-beep.mp3",
+  default: "./eqamah.mp3",   // full iqama
+  short:   "./short.mp3",    // short notification
 },
 ```
 
-You can also set different audio per prayer by uncommenting individual lines (e.g., `Fajr: "./fajr.mp3"`).
-
-### Change Background Images
-
-Background images are listed in `config.js`. A random one is picked each time the page loads:
+### Background Images
 
 ```js
 backgrounds: [
-  "./backrgounds/Background6.png",
-  "./backrgounds/Background7.png",
+  "./backgrounds/Background6.png",
+  "./backgrounds/Background7.png",
 ],
 ```
 
-To add a new background: drop the image in the `backrgounds/` folder and add its path to the array.
+A random one is picked on each page load.
 
-### Change Direction Images
-
-The "How to Reach the Room" slider reads from `config.js`. Images are shown in the listed order:
+### Direction Images
 
 ```js
 directionImages: [
   "./how_to_get_there/000.png",
   "./how_to_get_there/100.png",
-  "./how_to_get_there/200.jpg",
-  "./how_to_get_there/300.jpg",
-  "./how_to_get_there/400.jpg",
+  // ...
 ],
 ```
 
-To add/remove steps: update the files in `how_to_get_there/` and edit the array.
+Shown in order in the "How to Reach the Room" slider.
 
-### Change the Location
-
-Edit the `location` object in `config.js`:
-
-```js
-location: {
-  name: "Bahen Centre, 40 St. George St",
-  mapsUrl: "https://maps.google.com/?q=...",
-},
-```
-
-### Deploy Changes
-
-After editing, commit and push:
+### Deploy
 
 ```bash
-git add -A
-git commit -m "Update iqama times"
-git push
+git add -A && git commit -m "Update iqama times" && git push
 ```
 
-GitHub Pages will automatically redeploy within a minute or two.
+GitHub Pages redeploys automatically in ~1 minute.
 
 ---
 
 ## Features
 
-- **ISNA adhan times** fetched daily from [AlAdhan.com](https://aladhan.com) API
-- **Maghrib iqama auto-calculated** (adhan + 5 min, follows sunset daily)
-- Plays full iqama or short notification at each prayer time
-- **Skip** button to stop audio once it starts playing
-- **Short notification** toggle (remembered across sessions)
-- **Test Sound** button to preview the short notification
-- Daily aya and hadith (date-specific or default)
-- **Directions slider** with step-by-step photos to find the room
-- Random background image on each page load (configurable)
-- Facilities info (washroom, sisters' prayer area)
+- ISNA adhan times fetched daily from [AlAdhan.com](https://aladhan.com)
+- Maghrib iqama auto-calculated (sunset + 5 min)
+- Full iqama or short notification audio
+- Skip button to stop audio early
+- Short notification toggle (persisted)
+- Test sound button
+- Daily aya and hadith
+- Direction photo slider with swipe support
+- Random background image
+- Facilities info
 - Location link to Google Maps
-- "Last updated" date for iqama times
-- How-to-use instructions for visitors
-- All times shown in Toronto timezone
-- Beta notice with feedback links
 
 ---
 
-## Files
+## Project Structure
 
-| File / Folder | Purpose |
-|---------------|---------|
-| `index.html` | Main page (HTML + CSS + JS logic) |
-| `config.js` | **All editable settings** (times, content, audio, images, location) |
-| `eqamah.mp3` | Full iqama audio |
-| `short.mp3` | Short notification audio |
-| `adhan.mp3` | Backup adhan audio |
-| `backrgounds/` | Background images (random on each load) |
-| `how_to_get_there/` | Direction photos shown in the slider |
-| `not_used_backgrounds/` | Unused background images (not displayed) |
-| `README.md` | This file |
+```
+├── index.html              Main page
+├── config.js               All settings (edit this)
+├── eqamah.mp3              Full iqama audio
+├── short.mp3               Short notification audio
+├── backgrounds/            Background images
+├── how_to_get_there/       Direction photos
+├── .gitignore
+└── README.md
+```
 
 ---
 
 ## Custom Domain (Optional)
 
-1. Buy a domain (e.g., from Namecheap, Google Domains).
-2. In your domain's DNS settings, add a CNAME record pointing to `moh-assan.github.io`.
-3. In the GitHub repo: Settings > Pages > Custom domain — enter your domain.
-4. GitHub will create a `CNAME` file in the repo automatically.
+1. Buy a domain.
+2. Add a CNAME DNS record pointing to `moh-assan.github.io`.
+3. In the repo: Settings → Pages → Custom domain.
 
 ---
 
 ## Credits
 
-- Adhan times API: [AlAdhan.com](https://aladhan.com) (ISNA method)
-- Timezone handling: [Luxon](https://moment.github.io/luxon/)
-- Adhan audio: [AlAdhan.com](https://aladhan.com/download-adhans)
+- Adhan times: [AlAdhan.com](https://aladhan.com) (ISNA method)
+- Timezone: [Luxon](https://moment.github.io/luxon/)

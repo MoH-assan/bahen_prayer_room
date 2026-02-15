@@ -5,12 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Bahen Prayer Room — Iqama Reminder</title>
   <style>
+    /* ── Variables ──────────────────────────────────────────── */
     :root {
       --bg: #f8f9fa;
-      --card-bg: #fff;
       --text: #1a1a2e;
       --muted: #6c757d;
       --accent: #0d6e3e;
+      --accent-dark: #0b5c34;
       --accent-light: #e8f5e9;
       --border: #dee2e6;
       --radius: 14px;
@@ -18,6 +19,7 @@
       --danger: #c0392b;
     }
 
+    /* ── Reset & Base ──────────────────────────────────────── */
     * { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
@@ -34,26 +36,34 @@
       padding: 24px 16px 48px;
     }
 
+    /* ── Glass panel (shared by header, cards, footer, disclaimer) */
+    .glass {
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+    }
+
+    /* ── Header ────────────────────────────────────────────── */
     header {
       text-align: center;
       padding: 28px 24px 16px;
-      background: rgba(255,255,255,0.88);
-      backdrop-filter: blur(10px);
-      border-radius: var(--radius);
       margin-bottom: 4px;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
     }
+
     header h1 {
       font-size: 1.6rem;
       font-weight: 700;
       color: var(--accent);
     }
-    header .subtitle {
+
+    .subtitle {
       color: var(--muted);
       font-size: 0.9rem;
       margin-top: 4px;
     }
-    header .location-link {
+
+    .location-link {
       display: inline-block;
       margin-top: 6px;
       font-size: 0.85rem;
@@ -61,30 +71,17 @@
       text-decoration: none;
       border-bottom: 1px dashed var(--accent);
     }
-    header .location-link:hover {
+
+    .location-link:hover {
       border-bottom-style: solid;
     }
 
-    .disclaimer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.72rem;
-      margin-top: 24px;
-      padding: 10px 16px;
-      background: rgba(255,255,255,0.8);
-      backdrop-filter: blur(6px);
-      border-radius: 10px;
-      line-height: 1.5;
-    }
-
+    /* ── Cards ──────────────────────────────────────────────── */
     .card {
-      background: rgba(255,255,255,0.94);
-      backdrop-filter: blur(10px);
       border: 1px solid var(--border);
-      border-radius: var(--radius);
       padding: 20px;
       margin: 16px 0;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .card h3 {
@@ -94,13 +91,7 @@
       color: var(--accent);
     }
 
-    .controls {
-      display: flex;
-      gap: 10px;
-      flex-wrap: wrap;
-      align-items: center;
-    }
-
+    /* ── Buttons ────────────────────────────────────────────── */
     button {
       padding: 10px 20px;
       border-radius: 10px;
@@ -111,60 +102,23 @@
       transition: all 0.2s;
     }
 
-    .btn-primary {
-      background: var(--accent);
-      color: #fff;
-    }
-    .btn-primary:hover { background: #0b5c34; }
+    .btn-primary            { background: var(--accent); color: #fff; }
+    .btn-primary:hover      { background: var(--accent-dark); }
+    .btn-secondary          { background: #f1f3f5; color: var(--text); border: 1px solid var(--border); }
+    .btn-secondary:hover    { background: #e9ecef; }
+    .btn-warn               { background: var(--warn); color: #fff; }
+    .btn-warn:hover         { background: #cf6d17; }
+    .btn-link               { display: inline-block; margin-top: 14px; padding: 10px 20px;
+                              background: var(--accent); color: #fff; border-radius: 10px;
+                              text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+    .btn-link:hover         { background: var(--accent-dark); }
 
-    .btn-secondary {
-      background: #f1f3f5;
-      color: var(--text);
-      border: 1px solid var(--border);
-    }
-    .btn-secondary:hover { background: #e9ecef; }
-
-    .btn-warn {
-      background: var(--warn);
-      color: #fff;
-    }
-    .btn-warn:hover { background: #cf6d17; }
-
-    .btn-danger {
-      background: var(--danger);
-      color: #fff;
-    }
-    .btn-danger:hover { background: #a93226; }
-
-    #snoozeBar {
-      display: none;
-      margin-top: 12px;
-      padding: 12px 16px;
-      background: #fff3e0;
-      border-radius: 10px;
-      border: 1px solid var(--warn);
-      align-items: center;
+    /* ── Controls card ─────────────────────────────────────── */
+    .controls {
+      display: flex;
       gap: 10px;
       flex-wrap: wrap;
-    }
-    #snoozeBar.visible { display: flex; }
-    #snoozeBar .snooze-text {
-      flex: 1;
-      font-weight: 600;
-      font-size: 0.95rem;
-      min-width: 120px;
-    }
-
-    #status {
-      color: var(--muted);
-      font-size: 0.9rem;
-      margin-top: 12px;
-    }
-    #nextLine {
-      font-size: 0.95rem;
-      font-weight: 500;
-      margin-top: 6px;
-      min-height: 1.4em;
+      align-items: center;
     }
 
     .toggle-row {
@@ -174,69 +128,49 @@
       margin-top: 12px;
       font-size: 0.9rem;
     }
-    .toggle-row label {
-      cursor: pointer;
-      user-select: none;
-    }
+
+    .toggle-row label { cursor: pointer; user-select: none; }
 
     /* Toggle switch */
-    .switch {
-      position: relative;
-      width: 44px;
-      height: 24px;
-      flex-shrink: 0;
+    .switch           { position: relative; width: 44px; height: 24px; flex-shrink: 0; }
+    .switch input     { opacity: 0; width: 0; height: 0; }
+    .toggle-slider    { position: absolute; cursor: pointer; inset: 0;
+                        background: #ccc; border-radius: 24px; transition: 0.3s; }
+    .toggle-slider::before {
+      content: ""; position: absolute; height: 18px; width: 18px;
+      left: 3px; bottom: 3px; background: #fff; border-radius: 50%; transition: 0.3s;
     }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider {
-      position: absolute;
-      cursor: pointer;
-      inset: 0;
-      background: #ccc;
-      border-radius: 24px;
-      transition: 0.3s;
-    }
-    .slider::before {
-      content: "";
-      position: absolute;
-      height: 18px;
-      width: 18px;
-      left: 3px;
-      bottom: 3px;
-      background: #fff;
-      border-radius: 50%;
-      transition: 0.3s;
-    }
-    .switch input:checked + .slider { background: var(--accent); }
-    .switch input:checked + .slider::before { transform: translateX(20px); }
+    .switch input:checked + .toggle-slider          { background: var(--accent); }
+    .switch input:checked + .toggle-slider::before   { transform: translateX(20px); }
 
-    table {
-      width: 100%;
-      border-collapse: collapse;
-    }
-    th {
-      padding: 8px 8px 10px;
-      text-align: left;
-      font-size: 0.8rem;
-      color: var(--muted);
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.03em;
-      border-bottom: 2px solid var(--border);
-    }
-    td {
-      padding: 10px 8px;
-      border-bottom: 1px solid #f0f0f0;
-      font-size: 0.95rem;
-    }
-    td:first-child {
-      font-weight: 600;
-      width: 34%;
-    }
-    tbody tr:last-child td { border-bottom: none; }
+    #status    { color: var(--muted); font-size: 0.9rem; margin-top: 12px; }
+    #nextLine  { font-size: 0.95rem; font-weight: 500; margin-top: 6px; min-height: 1.4em; }
 
-    .ok  { color: var(--accent); font-weight: 700; }
-    .bad { color: var(--danger); font-weight: 700; }
+    /* Snooze bar */
+    #snoozeBar {
+      display: none; margin-top: 12px; padding: 12px 16px;
+      background: #fff3e0; border-radius: 10px; border: 1px solid var(--warn);
+      align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    #snoozeBar.visible        { display: flex; }
+    #snoozeBar .snooze-text   { flex: 1; font-weight: 600; font-size: 0.95rem; min-width: 120px; }
 
+    /* ── Table ──────────────────────────────────────────────── */
+    table        { width: 100%; border-collapse: collapse; }
+    th           { padding: 8px 8px 10px; text-align: left; font-size: 0.8rem;
+                   color: var(--muted); font-weight: 600; text-transform: uppercase;
+                   letter-spacing: 0.03em; border-bottom: 2px solid var(--border); }
+    td           { padding: 10px 8px; border-bottom: 1px solid #f0f0f0; font-size: 0.95rem; }
+    td:first-child          { font-weight: 600; width: 34%; }
+    tbody tr:last-child td   { border-bottom: none; }
+
+    /* ── Helpers ────────────────────────────────────────────── */
+    .ok         { color: var(--accent); font-weight: 700; }
+    .bad        { color: var(--danger); font-weight: 700; }
+    .muted      { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
+    .last-updated { color: var(--muted); font-size: 0.78rem; margin-top: 4px; font-style: italic; }
+
+    /* ── Content blocks (aya / hadith) ─────────────────────── */
     .content-block {
       padding: 12px 16px;
       background: var(--accent-light);
@@ -245,120 +179,94 @@
     }
     .content-block b { display: block; margin-bottom: 4px; }
 
-    .muted { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
+    /* ── Facilities list ───────────────────────────────────── */
+    .facility-list {
+      list-style: none;
+      padding-left: 0;
+      font-size: 0.9rem;
+    }
+    .facility-list li { margin-bottom: 6px; padding-left: 20px; position: relative; }
+    .facility-list li::before {
+      content: "\25CF"; color: var(--accent); position: absolute; left: 0;
+    }
+    .facility-list li:last-child { margin-bottom: 0; }
 
-    /* Image slider */
-    .slider-wrap {
-      position: relative;
-      margin-top: 12px;
-      border-radius: 10px;
-      overflow: hidden;
+    /* ── How-to-use list ───────────────────────────────────── */
+    .how-to-list {
+      font-size: 0.9rem;
+      padding-left: 20px;
     }
-    .slider-wrap img {
-      width: 100%;
-      display: none;
-      border-radius: 10px;
-    }
-    .slider-wrap img.active { display: block; }
+    .how-to-list li { margin-bottom: 6px; }
+    .how-to-list li:last-child { margin-bottom: 0; }
+    .test-btn-row { margin-top: 12px; }
+
+    /* ── Image slider ──────────────────────────────────────── */
+    .slider-wrap                { position: relative; margin-top: 12px; border-radius: 10px; overflow: hidden; }
+    .slider-wrap img            { width: 100%; display: none; border-radius: 10px; }
+    .slider-wrap img.active     { display: block; }
+
     .slider-badge {
-      position: absolute;
-      top: 8px;
-      left: 8px;
-      min-width: 28px;
-      height: 28px;
-      padding: 0 8px;
-      background: var(--accent);
-      color: #fff;
-      border-radius: 14px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 0.8rem;
-      font-weight: 700;
-      box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+      position: absolute; top: 8px; left: 8px; min-width: 28px; height: 28px;
+      padding: 0 8px; background: var(--accent); color: #fff; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 700; box-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
     }
+
     .slider-controls {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 14px;
-      margin-top: 10px;
+      display: flex; justify-content: center; align-items: center;
+      gap: 14px; margin-top: 10px;
     }
     .slider-controls button {
-      width: 36px;
-      height: 36px;
-      padding: 0;
-      border-radius: 50%;
-      background: var(--accent);
-      color: #fff;
-      font-size: 1.1rem;
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
+      width: 36px; height: 36px; padding: 0; border-radius: 50%;
+      background: var(--accent); color: #fff; font-size: 1.1rem;
+      line-height: 1; display: flex; align-items: center; justify-content: center;
     }
-    .slider-controls button:hover { background: #0b5c34; }
+    .slider-controls button:hover { background: var(--accent-dark); }
+
     .slider-counter {
-      font-size: 0.85rem;
-      color: var(--muted);
-      font-weight: 600;
-      min-width: 40px;
-      text-align: center;
+      font-size: 0.85rem; color: var(--muted); font-weight: 600;
+      min-width: 40px; text-align: center;
     }
 
-    .last-updated {
-      color: var(--muted);
-      font-size: 0.78rem;
-      margin-top: 4px;
-      font-style: italic;
+    /* ── Disclaimer ────────────────────────────────────────── */
+    .disclaimer {
+      text-align: center; color: var(--muted); font-size: 0.72rem;
+      margin-top: 24px; padding: 10px 16px; line-height: 1.5;
     }
+    .disclaimer a { color: var(--accent); }
 
-    code {
-      background: #f1f3f5;
-      padding: 2px 6px;
-      border-radius: 6px;
-      font-size: 0.85rem;
-    }
-
+    /* ── Footer ────────────────────────────────────────────── */
     footer {
-      text-align: center;
-      color: var(--muted);
-      font-size: 0.8rem;
-      margin-top: 20px;
-      padding: 10px 16px;
-      background: rgba(255,255,255,0.8);
-      backdrop-filter: blur(6px);
-      border-radius: 10px;
+      text-align: center; color: var(--muted); font-size: 0.8rem;
+      margin-top: 12px; padding: 10px 16px;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <header>
+
+    <!-- Header -->
+    <header class="glass">
       <h1>Bahen Prayer Room</h1>
       <div class="subtitle">Iqama Reminder &middot; Toronto</div>
       <a id="locationLink" class="location-link" target="_blank" rel="noopener"></a>
     </header>
 
     <!-- Controls -->
-    <div class="card">
+    <div class="card glass">
       <div class="controls">
         <button class="btn-primary" id="enableBtn">Enable Audio &amp; Start</button>
         <button class="btn-secondary" id="stopBtn">Stop</button>
       </div>
-
       <div class="toggle-row">
         <label class="switch">
           <input type="checkbox" id="shortToggle" />
-          <span class="slider"></span>
+          <span class="toggle-slider"></span>
         </label>
         <label for="shortToggle">Short notification (instead of full iqama)</label>
       </div>
-
       <p id="status">Not running.</p>
       <p id="nextLine"></p>
-
-      <!-- Snooze bar — shown when audio is playing -->
       <div id="snoozeBar">
         <span class="snooze-text" id="snoozeText">Playing...</span>
         <button class="btn-warn" id="snoozeBtn">Skip</button>
@@ -366,12 +274,10 @@
     </div>
 
     <!-- Prayer Times -->
-    <div class="card">
+    <div class="card glass">
       <h3>Prayer Times (Toronto Time)</h3>
-      <table id="timesTable">
-        <thead>
-          <tr><th>Prayer</th><th>Adhan</th><th>Iqama</th></tr>
-        </thead>
+      <table>
+        <thead><tr><th>Prayer</th><th>Adhan</th><th>Iqama</th></tr></thead>
         <tbody id="timesBody"></tbody>
       </table>
       <p class="muted" id="adhanSource"></p>
@@ -379,61 +285,57 @@
     </div>
 
     <!-- Facilities -->
-    <div class="card">
+    <div class="card glass">
       <h3>Facilities</h3>
-      <ul style="font-size:0.9rem;padding-left:20px;list-style:none;">
-        <li style="margin-bottom:6px;">&#9899; Washroom available</li>
-        <li>&#9899; Sisters' prayer area available</li>
+      <ul class="facility-list">
+        <li>Washroom available</li>
+        <li>Sisters' prayer area available</li>
       </ul>
     </div>
 
     <!-- How to Use -->
-    <div class="card">
+    <div class="card glass">
       <h3>How to Use</h3>
-      <ol style="font-size:0.9rem;padding-left:20px;color:var(--text);">
-        <li style="margin-bottom:6px;"><strong>Tap "Enable Audio &amp; Start"</strong> above &mdash; this unlocks sound in your browser and starts the reminder.</li>
-        <li style="margin-bottom:6px;"><strong>Keep this tab open</strong> &mdash; the reminder runs in the background as long as the tab stays open.</li>
-        <li style="margin-bottom:6px;">When it's iqama time, the audio will play automatically. Use the <strong>Skip</strong> button to stop it early.</li>
-        <li style="margin-bottom:6px;">Toggle <strong>"Short notification"</strong> if you prefer a brief alert instead of the full iqama audio.</li>
-        <li style="margin-bottom:6px;">Tap <strong>"Stop"</strong> to disable the reminder at any time.</li>
+      <ol class="how-to-list">
+        <li><strong>Tap "Enable Audio &amp; Start"</strong> above &mdash; this unlocks sound in your browser and starts the reminder.</li>
+        <li><strong>Keep this tab open</strong> &mdash; the reminder runs in the background as long as the tab stays open.</li>
+        <li>When it's iqama time, the audio will play automatically. Use the <strong>Skip</strong> button to stop it early.</li>
+        <li>Toggle <strong>"Short notification"</strong> if you prefer a brief alert instead of the full iqama audio.</li>
+        <li>Tap <strong>"Stop"</strong> to disable the reminder at any time.</li>
       </ol>
-      <div style="margin-top:12px;">
+      <div class="test-btn-row">
         <button class="btn-secondary" id="testSoundBtn">&#9835; Test Short Notification</button>
       </div>
     </div>
 
     <!-- Aya of the Day -->
-    <div class="card">
+    <div class="card glass">
       <h3>Aya of the Day</h3>
       <div id="ayaBox" class="content-block"></div>
     </div>
 
     <!-- Hadith of the Day -->
-    <div class="card">
+    <div class="card glass">
       <h3>Hadith of the Day</h3>
       <div id="hadithBox" class="content-block"></div>
     </div>
 
-    <!-- How to reach the room -->
-    <div class="card">
+    <!-- How to Reach the Room -->
+    <div class="card glass">
       <h3>How to Reach the Room</h3>
-
-      <div class="slider-wrap" id="dirSlider">
-        <!-- Built from config.js directionImages -->
-      </div>
+      <div class="slider-wrap" id="dirSlider"></div>
       <div class="slider-controls">
         <button id="sliderPrev">&#8592;</button>
         <span class="slider-counter" id="sliderCounter"></span>
         <button id="sliderNext">&#8594;</button>
       </div>
-
-      <a href="https://bahen-prayer-room.wheree.com/" target="_blank" rel="noopener"
-         style="display:inline-block;margin-top:14px;padding:10px 20px;background:var(--accent);color:#fff;border-radius:10px;text-decoration:none;font-weight:600;font-size:0.9rem;">
+      <a class="btn-link" href="https://bahen-prayer-room.wheree.com/" target="_blank" rel="noopener">
         Full Interactive Directions
       </a>
     </div>
 
-    <div class="disclaimer">
+    <!-- Disclaimer -->
+    <div class="disclaimer glass">
       <strong>Beta</strong> &mdash; This site is a work in progress.
       Found a bug or have a suggestion? Submit a
       <a href="https://github.com/MoH-assan/bahen_prayer_room/issues" target="_blank" rel="noopener">GitHub issue</a>
@@ -444,409 +346,285 @@
       representative of the MSA, the University of Toronto, or any official university body.
     </div>
 
-    <footer>
+    <footer class="glass">
       Bahen Prayer Room &middot; University of Toronto
     </footer>
   </div>
 
   <audio id="adhan" preload="auto"></audio>
-
-  <!-- Luxon for timezone-safe scheduling -->
   <script src="https://cdn.jsdelivr.net/npm/luxon@3/build/global/luxon.min.js"></script>
-  <!-- Separate config for easy editing -->
   <script src="./config.js"></script>
+
   <script>
+  (function () {
+    "use strict";
     const { DateTime } = luxon;
 
-    // ── Read CONFIG ─────────────────────────────────────────
-    const ZONE               = CONFIG.timezone;
-    const IQAMA_TIMES        = { ...CONFIG.iqamaTimes };  // mutable copy
-    const AUDIO_BY_PRAYER    = CONFIG.audio;
-    const DAILY_AYA          = CONFIG.dailyAya;
-    const DAILY_HADITH       = CONFIG.dailyHadith;
-    const LATE_GRACE_SECONDS = CONFIG.lateGraceSeconds;
-    const MAGHRIB_OFFSET     = CONFIG.maghribOffsetMinutes || 5;
-    const ADHAN_API          = CONFIG.adhanApi || {};
+    // ── Config shortcuts ──────────────────────────────────────
+    const ZONE            = CONFIG.timezone;
+    const IQAMA_TIMES     = { ...CONFIG.iqamaTimes };
+    const AUDIO           = CONFIG.audio;
+    const AYA             = CONFIG.dailyAya;
+    const HADITH          = CONFIG.dailyHadith;
+    const GRACE_SEC       = CONFIG.lateGraceSeconds;
+    const MAGHRIB_OFFSET  = CONFIG.maghribOffsetMinutes || 5;
+    const API             = CONFIG.adhanApi || {};
+    const PRAYER_ORDER    = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
-    // Adhan times fetched from API  { Fajr: "HH:MM", Dhuhr: "HH:MM", ... }
     let adhanTimes = {};
 
-    // The 5 prayers we care about, in order
-    const PRAYER_ORDER = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
+    // ── DOM ───────────────────────────────────────────────────
+    const $ = id => document.getElementById(id);
+    const enableBtn   = $("enableBtn");
+    const stopBtn     = $("stopBtn");
+    const shortToggle = $("shortToggle");
+    const statusEl    = $("status");
+    const nextLineEl  = $("nextLine");
+    const timesBody   = $("timesBody");
+    const lastUpdEl   = $("lastUpdated");
+    const adhanSrcEl  = $("adhanSource");
+    const ayaBox      = $("ayaBox");
+    const hadithBox   = $("hadithBox");
+    const audioEl     = $("adhan");
+    const locationEl  = $("locationLink");
+    const snoozeBar   = $("snoozeBar");
+    const snoozeText  = $("snoozeText");
+    const snoozeBtn   = $("snoozeBtn");
 
-    // ── DOM refs ────────────────────────────────────────────
-    const enableBtn    = document.getElementById("enableBtn");
-    const stopBtn      = document.getElementById("stopBtn");
-    const shortToggle  = document.getElementById("shortToggle");
-    const statusEl     = document.getElementById("status");
-    const nextLineEl   = document.getElementById("nextLine");
-    const timesBody    = document.getElementById("timesBody");
-    const lastUpdEl    = document.getElementById("lastUpdated");
-    const adhanSrcEl   = document.getElementById("adhanSource");
-    const ayaBox       = document.getElementById("ayaBox");
-    const hadithBox    = document.getElementById("hadithBox");
-    const audioEl      = document.getElementById("adhan");
-    const locationLink = document.getElementById("locationLink");
-    const snoozeBar    = document.getElementById("snoozeBar");
-    const snoozeText   = document.getElementById("snoozeText");
-    const snoozeBtn    = document.getElementById("snoozeBtn");
+    let running = false, nextEvent = null, timeoutId = null, watchdogId = null;
 
-    let running    = false;
-    let nextEvent  = null;
-    let timeoutId  = null;
-    let watchdogId = null;
+    // ── Helpers ───────────────────────────────────────────────
+    const now   = () => DateTime.now().setZone(ZONE);
+    const fmt   = dt => dt.toFormat("yyyy-LL-dd HH:mm:ss");
 
-    // ── Helpers ─────────────────────────────────────────────
-    function nowTO() {
-      return DateTime.now().setZone(ZONE);
+    function parseHHMM(s) {
+      const [h, m] = s.split(":").map(Number);
+      return { h, m };
     }
 
-    function fmt(dt) {
-      return dt.toFormat("yyyy-LL-dd HH:mm:ss");
+    function addMinutes(hhmm, mins) {
+      const { h, m } = parseHHMM(hhmm);
+      return DateTime.fromObject({ hour: h, minute: m }, { zone: ZONE })
+        .plus({ minutes: mins }).toFormat("HH:mm");
     }
 
-    function parseHHMM(hhmm) {
-      const [hh, mm] = hhmm.split(":").map(Number);
-      return { hh, mm };
-    }
-
-    function addMinutesToHHMM(hhmm, mins) {
-      const { hh, mm } = parseHHMM(hhmm);
-      const dt = DateTime.fromObject({ hour: hh, minute: mm }, { zone: ZONE }).plus({ minutes: mins });
-      return dt.toFormat("HH:mm");
-    }
-
-    // ── Short mode persistence ──────────────────────────────
-    function isShortMode() {
-      return shortToggle.checked;
-    }
-
+    // ── Short-mode toggle ─────────────────────────────────────
     shortToggle.checked = localStorage.getItem("iqama_short_mode") === "1";
     shortToggle.addEventListener("change", () => {
       localStorage.setItem("iqama_short_mode", shortToggle.checked ? "1" : "0");
     });
 
-    // ── Fetch ISNA adhan times ──────────────────────────────
+    // ── Fetch ISNA adhan times ────────────────────────────────
     async function fetchAdhanTimes() {
       try {
-        const city    = ADHAN_API.city    || "Toronto";
-        const country = ADHAN_API.country || "Canada";
-        const method  = ADHAN_API.method  || 2;  // ISNA
-        const today   = nowTO();
-        const dd      = today.toFormat("dd");
-        const MM      = today.toFormat("LL");
-        const yyyy    = today.toFormat("yyyy");
+        const d    = now();
+        const url  = `https://api.aladhan.com/v1/timingsByCity/${d.toFormat("dd-LL-yyyy")}` +
+                     `?city=${encodeURIComponent(API.city || "Toronto")}` +
+                     `&country=${encodeURIComponent(API.country || "Canada")}` +
+                     `&method=${API.method || 2}`;
+        const json = await (await fetch(url)).json();
 
-        const url = `https://api.aladhan.com/v1/timingsByCity/${dd}-${MM}-${yyyy}?city=${encodeURIComponent(city)}&country=${encodeURIComponent(country)}&method=${method}`;
-
-        const res  = await fetch(url);
-        const json = await res.json();
-
-        if (json.code === 200 && json.data && json.data.timings) {
+        if (json.code === 200 && json.data?.timings) {
           const t = json.data.timings;
+          const clean = s => (s || "").replace(/ \(.*\)/, "");
           adhanTimes = {
-            Fajr:    t.Fajr    ? t.Fajr.replace(/ \(.*\)/, "")    : "",
-            Dhuhr:   t.Dhuhr   ? t.Dhuhr.replace(/ \(.*\)/, "")   : "",
-            Asr:     t.Asr     ? t.Asr.replace(/ \(.*\)/, "")     : "",
-            Maghrib: t.Maghrib ? t.Maghrib.replace(/ \(.*\)/, "") : "",
-            Isha:    t.Isha    ? t.Isha.replace(/ \(.*\)/, "")    : "",
+            Fajr: clean(t.Fajr), Dhuhr: clean(t.Dhuhr), Asr: clean(t.Asr),
+            Maghrib: clean(t.Maghrib), Isha: clean(t.Isha),
           };
-
-          // Auto-calculate Maghrib iqama = adhan + offset
           if (adhanTimes.Maghrib) {
-            IQAMA_TIMES.Maghrib = addMinutesToHHMM(adhanTimes.Maghrib, MAGHRIB_OFFSET);
+            IQAMA_TIMES.Maghrib = addMinutes(adhanTimes.Maghrib, MAGHRIB_OFFSET);
           }
-
-          adhanSrcEl.textContent = `Adhan times: ISNA method via AlAdhan.com`;
-          return true;
+          adhanSrcEl.textContent = "Adhan times: ISNA method via AlAdhan.com";
+          return;
         }
-      } catch (e) {
-        console.warn("Failed to fetch adhan times:", e);
-      }
+      } catch (e) { console.warn("Adhan API error:", e); }
 
       adhanSrcEl.textContent = "Adhan times unavailable (API error)";
-      // If API fails and Maghrib isn't set, use a safe fallback
-      if (!IQAMA_TIMES.Maghrib) {
-        IQAMA_TIMES.Maghrib = "18:15";
-      }
-      return false;
+      if (!IQAMA_TIMES.Maghrib) IQAMA_TIMES.Maghrib = "18:15";
     }
 
-    // ── Build UI ────────────────────────────────────────────
+    // ── Build UI ──────────────────────────────────────────────
     function buildTimesTable() {
       timesBody.innerHTML = "";
       PRAYER_ORDER.forEach(name => {
-        const adhan = adhanTimes[name] || "—";
-        const iqama = IQAMA_TIMES[name] || "—";
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${adhan}</td><td>${iqama}</td>`;
+        tr.innerHTML = `<td>${name}</td><td>${adhanTimes[name] || "—"}</td><td>${IQAMA_TIMES[name] || "—"}</td>`;
         timesBody.appendChild(tr);
       });
     }
 
-    function setLastUpdated() {
-      if (CONFIG.lastUpdated) {
-        lastUpdEl.textContent = `Iqama times last updated: ${CONFIG.lastUpdated}`;
-      }
-    }
-
     function setLocation() {
-      if (CONFIG.location && CONFIG.location.name) {
-        locationLink.textContent = CONFIG.location.name;
-        locationLink.href = CONFIG.location.mapsUrl || "#";
-      } else {
-        locationLink.style.display = "none";
-      }
+      const loc = CONFIG.location;
+      if (loc?.name) { locationEl.textContent = loc.name; locationEl.href = loc.mapsUrl || "#"; }
+      else           { locationEl.style.display = "none"; }
     }
 
-    function setTodaysText() {
-      const d   = nowTO().toFormat("yyyy-LL-dd");
-      const aya = DAILY_AYA[d]    || DAILY_AYA["default"];
-      const had = DAILY_HADITH[d] || DAILY_HADITH["default"];
-
+    function setDailyContent() {
+      const d   = now().toFormat("yyyy-LL-dd");
+      const aya = AYA[d]    || AYA["default"];
+      const had = HADITH[d] || HADITH["default"];
       ayaBox.innerHTML    = `<b>${aya.ref}</b><div>${aya.text}</div>`;
       hadithBox.innerHTML = `<b>${had.ref}</b><div>${had.text}</div>`;
     }
 
-    // ── Scheduling ──────────────────────────────────────────
-    function computeNextEvent() {
-      const now = nowTO();
-
-      const candidates = Object.entries(IQAMA_TIMES)
-        .filter(([name]) => PRAYER_ORDER.includes(name))
-        .map(([name, hhmm]) => {
-          const { hh, mm } = parseHHMM(hhmm);
-          let dt = now.set({ hour: hh, minute: mm, second: 0, millisecond: 0 });
-          if (dt <= now) dt = dt.plus({ days: 1 });
-          return { name, dt };
-        });
-
-      candidates.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
-      return { ...candidates[0], fired: false };
+    // ── Audio ─────────────────────────────────────────────────
+    function audioSrc(prayer) {
+      if (shortToggle.checked) return AUDIO.short || "./short.mp3";
+      return AUDIO[prayer] || AUDIO.default || "./eqamah.mp3";
     }
 
-    function getAudioSrc(prayerName) {
-      if (isShortMode()) {
-        return AUDIO_BY_PRAYER.short || "./short.mp3";
-      }
-      return AUDIO_BY_PRAYER[prayerName] || AUDIO_BY_PRAYER.default || "./eqamah.mp3";
-    }
-
-    async function playForPrayer(prayerName) {
-      const src = getAudioSrc(prayerName);
+    async function play(prayer) {
+      const src = audioSrc(prayer);
       if (audioEl.src !== new URL(src, location.href).href) audioEl.src = src;
       audioEl.currentTime = 0;
       await audioEl.play();
     }
 
-    function stopAudio() {
-      audioEl.pause();
-      audioEl.currentTime = 0;
-      hideSnoozeBar();
-    }
+    function stopAudio() { audioEl.pause(); audioEl.currentTime = 0; hideSnooze(); }
 
-    // ── Snooze / Skip ───────────────────────────────────────
-    function showSnoozeBar(prayerName) {
-      snoozeText.textContent = `Playing ${prayerName}...`;
-      snoozeBar.classList.add("visible");
-    }
+    // ── Snooze bar ────────────────────────────────────────────
+    function showSnooze(name) { snoozeText.textContent = `Playing ${name}...`; snoozeBar.classList.add("visible"); }
+    function hideSnooze()     { snoozeBar.classList.remove("visible"); }
 
-    function hideSnoozeBar() {
-      snoozeBar.classList.remove("visible");
-    }
+    snoozeBtn.addEventListener("click", () => { stopAudio(); statusEl.innerHTML = `Skipped <span class="ok">&#10003;</span>`; });
+    audioEl.addEventListener("ended", hideSnooze);
 
-    snoozeBtn.addEventListener("click", () => {
-      stopAudio();
-      statusEl.innerHTML = `Skipped <span class="ok">&#10003;</span>`;
-    });
-
-    audioEl.addEventListener("ended", () => {
-      hideSnoozeBar();
-    });
-
+    // ── Scheduling ────────────────────────────────────────────
     function clearTimers() {
-      if (timeoutId)  { clearTimeout(timeoutId);   timeoutId  = null; }
-      if (watchdogId) { clearInterval(watchdogId);  watchdogId = null; }
+      if (timeoutId)  { clearTimeout(timeoutId);  timeoutId  = null; }
+      if (watchdogId) { clearInterval(watchdogId); watchdogId = null; }
+    }
+
+    function computeNext() {
+      const n = now();
+      const list = Object.entries(IQAMA_TIMES)
+        .filter(([k]) => PRAYER_ORDER.includes(k))
+        .map(([name, hhmm]) => {
+          const { h, m } = parseHHMM(hhmm);
+          let dt = n.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+          if (dt <= n) dt = dt.plus({ days: 1 });
+          return { name, dt };
+        });
+      list.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
+      return { ...list[0], fired: false };
     }
 
     function updateUI() {
-      if (!running) {
-        statusEl.innerHTML     = "Not running.";
-        nextLineEl.textContent = "";
-        return;
-      }
-      const now = nowTO();
+      if (!running) { statusEl.innerHTML = "Not running."; nextLineEl.textContent = ""; return; }
       statusEl.innerHTML = `Running <span class="ok">&#9679;</span> &nbsp;(keep this tab open)`;
-
       if (nextEvent) {
-        const secs = Math.max(0, Math.floor((nextEvent.dt.toMillis() - now.toMillis()) / 1000));
-        const hh = String(Math.floor(secs / 3600)).padStart(2, "0");
-        const mm = String(Math.floor((secs % 3600) / 60)).padStart(2, "0");
-        const ss = String(secs % 60).padStart(2, "0");
-        nextLineEl.textContent =
-          `Next: ${nextEvent.name} at ${fmt(nextEvent.dt)} (${ZONE})  |  in ${hh}:${mm}:${ss}`;
+        const s  = Math.max(0, Math.floor((nextEvent.dt.toMillis() - now().toMillis()) / 1000));
+        const hh = String(Math.floor(s / 3600)).padStart(2, "0");
+        const mm = String(Math.floor((s % 3600) / 60)).padStart(2, "0");
+        const ss = String(s % 60).padStart(2, "0");
+        nextLineEl.textContent = `Next: ${nextEvent.name} at ${fmt(nextEvent.dt)} (${ZONE})  |  in ${hh}:${mm}:${ss}`;
       }
     }
 
     async function triggerIfDue() {
       if (!running || !nextEvent || nextEvent.fired) return;
-
-      const now     = nowTO();
-      const diffSec = (now.toMillis() - nextEvent.dt.toMillis()) / 1000;
-
-      if (diffSec >= 0 && diffSec <= LATE_GRACE_SECONDS) {
+      const diff = (now().toMillis() - nextEvent.dt.toMillis()) / 1000;
+      if (diff >= 0 && diff <= GRACE_SEC) {
         nextEvent.fired = true;
         try {
-          await playForPrayer(nextEvent.name);
-          showSnoozeBar(nextEvent.name);
+          await play(nextEvent.name);
+          showSnooze(nextEvent.name);
           statusEl.innerHTML = `Playing <b>${nextEvent.name}</b> <span class="ok">&#10003;</span>`;
-        } catch (e) {
-          statusEl.innerHTML =
-            `Audio blocked <span class="bad">&#10008;</span> — tap "Enable Audio & Start" again.`;
-        } finally {
-          scheduleNext();
-        }
+        } catch {
+          statusEl.innerHTML = `Audio blocked <span class="bad">&#10008;</span> — tap "Enable Audio & Start" again.`;
+        } finally { scheduleNext(); }
       }
     }
 
     function scheduleNext() {
       clearTimers();
-      nextEvent = computeNextEvent();
+      nextEvent = computeNext();
       updateUI();
-
-      const now     = nowTO();
-      const delayMs = Math.max(0, nextEvent.dt.toMillis() - now.toMillis());
-
-      timeoutId  = setTimeout(() => triggerIfDue(), delayMs);
+      const ms = Math.max(0, nextEvent.dt.toMillis() - now().toMillis());
+      timeoutId  = setTimeout(triggerIfDue, ms);
       watchdogId = setInterval(() => { updateUI(); triggerIfDue(); }, 1000);
     }
 
-    async function start() {
-      running = true;
-      localStorage.setItem("iqama_reminder_enabled", "1");
-      scheduleNext();
-    }
+    function start() { running = true; localStorage.setItem("iqama_reminder_enabled", "1"); scheduleNext(); }
+    function stop()  { running = false; nextEvent = null; clearTimers(); stopAudio(); localStorage.removeItem("iqama_reminder_enabled"); updateUI(); }
 
-    function stop() {
-      running   = false;
-      nextEvent = null;
-      clearTimers();
-      stopAudio();
-      localStorage.removeItem("iqama_reminder_enabled");
-      updateUI();
-    }
-
-    // ── Events ──────────────────────────────────────────────
+    // ── Events ────────────────────────────────────────────────
     enableBtn.addEventListener("click", async () => {
-      try { await playForPrayer("default"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
+      try { await play("default"); audioEl.pause(); audioEl.currentTime = 0; } catch {}
       start();
     });
-
-    stopBtn.addEventListener("click", () => stop());
-
-    document.getElementById("testSoundBtn").addEventListener("click", async () => {
-      const src = AUDIO_BY_PRAYER.short || "./short.mp3";
-      audioEl.src = src;
+    stopBtn.addEventListener("click", stop);
+    $("testSoundBtn").addEventListener("click", async () => {
+      audioEl.src = AUDIO.short || "./short.mp3";
       audioEl.currentTime = 0;
       try { await audioEl.play(); } catch {}
     });
 
-    // ── Background (from config.js) ────────────────────────
-    (function setBackground() {
+    // ── Background ────────────────────────────────────────────
+    (function () {
       const bgs = CONFIG.backgrounds || [];
-      if (bgs.length > 0) {
-        const pick = bgs[Math.floor(Math.random() * bgs.length)];
-        document.body.style.backgroundImage = `url('${pick}')`;
-      }
+      if (bgs.length) document.body.style.backgroundImage = `url('${bgs[Math.floor(Math.random() * bgs.length)]}')`;
     })();
 
-    // ── Directions slider (from config.js) ──────────────────
-    (function initSlider() {
-      const images  = CONFIG.directionImages || [];
-      const wrap    = document.getElementById("dirSlider");
-      const counter = document.getElementById("sliderCounter");
+    // ── Directions slider ─────────────────────────────────────
+    (function () {
+      const images = CONFIG.directionImages || [];
+      const wrap   = $("dirSlider");
+      const ctr    = $("sliderCounter");
       if (!images.length) return;
 
-      // Build images from config
       images.forEach((src, i) => {
-        const container = document.createElement("div");
-        container.style.position = "relative";
-
-        const img = document.createElement("img");
-        img.src = src;
-        img.alt = `Step ${i + 1}`;
+        const div   = document.createElement("div");
+        div.style.position = "relative";
+        const img   = document.createElement("img");
+        img.src = src; img.alt = `Step ${i + 1}`;
         if (i === 0) img.classList.add("active");
-
         const badge = document.createElement("span");
         badge.className = "slider-badge";
         badge.textContent = `${i + 1} / ${images.length}`;
-
-        container.appendChild(img);
-        container.appendChild(badge);
-        wrap.appendChild(container);
+        div.append(img, badge);
+        wrap.appendChild(div);
       });
 
       const allImgs = wrap.querySelectorAll("img");
+      const total   = allImgs.length;
       let idx = 0;
-      const total = allImgs.length;
-      counter.textContent = `1 / ${total}`;
 
       function show(i) {
-        allImgs.forEach((img, n) => {
-          img.classList.toggle("active", n === i);
-        });
-        counter.textContent = `${i + 1} / ${total}`;
-        // Update all badges
-        wrap.querySelectorAll(".slider-badge").forEach((b, n) => {
-          b.style.display = (n === i) ? "flex" : "none";
-        });
+        allImgs.forEach((img, n) => img.classList.toggle("active", n === i));
+        ctr.textContent = `${i + 1} / ${total}`;
+        wrap.querySelectorAll(".slider-badge").forEach((b, n) => b.style.display = n === i ? "flex" : "none");
       }
 
-      document.getElementById("sliderPrev").addEventListener("click", () => {
-        idx = (idx - 1 + total) % total;
-        show(idx);
-      });
-      document.getElementById("sliderNext").addEventListener("click", () => {
-        idx = (idx + 1) % total;
-        show(idx);
-      });
+      $("sliderPrev").addEventListener("click", () => { idx = (idx - 1 + total) % total; show(idx); });
+      $("sliderNext").addEventListener("click", () => { idx = (idx + 1) % total; show(idx); });
 
-      // Swipe support for mobile
       let startX = 0;
       wrap.addEventListener("touchstart", e => { startX = e.touches[0].clientX; }, { passive: true });
       wrap.addEventListener("touchend", e => {
-        const diff = e.changedTouches[0].clientX - startX;
-        if (Math.abs(diff) > 40) {
-          if (diff < 0) { idx = (idx + 1) % total; }
-          else          { idx = (idx - 1 + total) % total; }
-          show(idx);
-        }
+        const d = e.changedTouches[0].clientX - startX;
+        if (Math.abs(d) > 40) { idx = d < 0 ? (idx + 1) % total : (idx - 1 + total) % total; show(idx); }
       }, { passive: true });
 
       show(0);
     })();
 
-    // ── Init ────────────────────────────────────────────────
-    (async function init() {
+    // ── Init ──────────────────────────────────────────────────
+    (async function () {
       setLocation();
-      setTodaysText();
-
-      // Fetch adhan times, then build table + schedule
+      setDailyContent();
       await fetchAdhanTimes();
       buildTimesTable();
-      setLastUpdated();
+      if (CONFIG.lastUpdated) lastUpdEl.textContent = `Iqama times last updated: ${CONFIG.lastUpdated}`;
       updateUI();
 
-      if (localStorage.getItem("iqama_reminder_enabled") === "1" ||
-          localStorage.getItem("prayer_reminder_enabled") === "1") {
-        localStorage.removeItem("prayer_reminder_enabled");
-        localStorage.setItem("iqama_reminder_enabled", "1");
+      if (localStorage.getItem("iqama_reminder_enabled") === "1") {
         running = true;
         scheduleNext();
-        statusEl.innerHTML =
-          `Running <span class="ok">&#9679;</span> &nbsp;(if sound doesn't play, tap Enable once)`;
+        statusEl.innerHTML = `Running <span class="ok">&#9679;</span> &nbsp;(if sound doesn't play, tap Enable once)`;
       }
     })();
+  })();
   </script>
 </body>
 </html>
