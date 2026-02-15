@@ -725,15 +725,10 @@
       try { await audioEl.play(); } catch {}
     });
 
-    // ── Random background on each load ────────────────────
-    (function setRandomBackground() {
+    // ── Background ─────────────────────────────────────────
+    (function setBackground() {
       const bgs = [
-        "./backrgounds/Background.png",
-        "./backrgounds/Background2.png",
-        "./backrgounds/Background3.jpg",
-        "./backrgounds/Background4.jpg",
-        "./backrgounds/Background5.jpg",
-        "./backrgounds/Background6.jpg",
+        "./backrgounds/Background7.png",
       ];
       const pick = bgs[Math.floor(Math.random() * bgs.length)];
       document.body.style.backgroundImage = `url('${pick}')`;
