@@ -195,6 +195,20 @@
     #snoozeBar.visible        { display: flex; }
     #snoozeBar .snooze-text   { flex: 1; font-weight: 600; font-size: 0.95rem; min-width: 120px; }
 
+    /* ── Countdown ──────────────────────────────────────────── */
+    .countdown {
+      text-align: center; padding: 16px; border-radius: 12px;
+      margin-bottom: 14px; transition: background 0.5s, color 0.5s;
+      background: #e8f5e9; color: #1a1a2e;
+    }
+    .countdown-label { font-size: 0.85rem; font-weight: 600; opacity: 0.8; }
+    .countdown-timer { font-size: 2rem; font-weight: 800; letter-spacing: 0.05em; font-variant-numeric: tabular-nums; }
+    .countdown.far     { background: #e8f5e9; color: #1a1a2e; }   /* > 30 min — green */
+    .countdown.medium  { background: #fff3e0; color: #e65100; }   /* 10–30 min — orange */
+    .countdown.soon    { background: #ffebee; color: #b71c1c; }   /* < 10 min — red */
+    .countdown.now     { background: #b71c1c; color: #fff; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
     /* ── Table ──────────────────────────────────────────────── */
     table        { width: 100%; border-collapse: collapse; }
     th           { padding: 8px 8px 10px; text-align: left; font-size: 0.8rem;
@@ -327,7 +341,15 @@
     <!-- Prayer Times -->
     <div class="card glass">
       <h3>Prayer Times (Toronto Time)</h3>
-      <p class="muted" id="todayDate" style="margin-top:-6px;margin-bottom:10px;"></p>
+      <p class="muted" id="todayDate" style="margin-top:-6px;margin-bottom:4px;"></p>
+      <p class="muted" id="currentTime" style="margin-bottom:10px;font-weight:600;"></p>
+
+      <!-- Countdown to next iqama -->
+      <div class="countdown" id="countdownBox">
+        <div class="countdown-label" id="countdownLabel">Next iqama</div>
+        <div class="countdown-timer" id="countdownTimer">--:--:--</div>
+      </div>
+
       <table>
         <thead><tr><th>Prayer</th><th>Adhan</th><th>Iqama</th></tr></thead>
         <tbody id="timesBody"></tbody>
@@ -594,6 +616,52 @@
       list.sort((a, b) => a.dt.toMillis() - b.dt.toMillis());
       return { ...list[0], fired: false };
     }
+
+    // ── Clock & Countdown ──────────────────────────────────
+    const countdownBox   = $("countdownBox");
+    const countdownLabel = $("countdownLabel");
+    const countdownTimer = $("countdownTimer");
+    const currentTimeEl  = $("currentTime");
+
+    function updateClock() {
+      currentTimeEl.textContent = now().toFormat("hh:mm:ss a");
+    }
+
+    function updateCountdown() {
+      // Always compute next iqama for countdown (even if not "running")
+      const n = now();
+      const next = Object.entries(IQAMA_TIMES)
+        .filter(([k]) => PRAYER_ORDER.includes(k))
+        .map(([name, hhmm]) => {
+          const { h, m } = parseHHMM(hhmm);
+          let dt = n.set({ hour: h, minute: m, second: 0, millisecond: 0 });
+          if (dt <= n) dt = dt.plus({ days: 1 });
+          return { name, dt };
+        })
+        .sort((a, b) => a.dt.toMillis() - b.dt.toMillis())[0];
+
+      if (!next) return;
+
+      const totalSec = Math.max(0, Math.floor((next.dt.toMillis() - n.toMillis()) / 1000));
+      const hh = String(Math.floor(totalSec / 3600)).padStart(2, "0");
+      const mm = String(Math.floor((totalSec % 3600) / 60)).padStart(2, "0");
+      const ss = String(totalSec % 60).padStart(2, "0");
+      const totalMin = totalSec / 60;
+
+      countdownLabel.textContent = `Next: ${next.name} at ${next.dt.toFormat("h:mm a")}`;
+      countdownTimer.textContent = `${hh}:${mm}:${ss}`;
+
+      // Color based on proximity
+      countdownBox.classList.remove("far", "medium", "soon", "now");
+      if (totalSec <= 0)         countdownBox.classList.add("now");
+      else if (totalMin <= 10)   countdownBox.classList.add("soon");
+      else if (totalMin <= 30)   countdownBox.classList.add("medium");
+      else                       countdownBox.classList.add("far");
+    }
+
+    // Tick every second for clock + countdown
+    setInterval(() => { updateClock(); updateCountdown(); }, 1000);
+    updateClock();
 
     function updateUI() {
       if (!running) { statusEl.innerHTML = "Not running."; nextLineEl.textContent = ""; return; }
