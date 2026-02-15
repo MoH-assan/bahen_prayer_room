@@ -2,7 +2,7 @@
 
 A simple, self-hosted prayer reminder for the Bahen Centre prayer room at the University of Toronto. Plays the adhan at iqama times and displays a daily aya and hadith.
 
-**Live site:** https://YOUR_USERNAME.github.io/bahen_prayer_room/
+**Live site:** https://moh-assan.github.io/bahen_prayer_room/
 
 ---
 
