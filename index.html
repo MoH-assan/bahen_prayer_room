@@ -22,7 +22,7 @@
 
     body {
       font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      background: var(--bg);
+      background: var(--bg) url('./Background.png') center top / cover no-repeat fixed;
       color: var(--text);
       line-height: 1.6;
       min-height: 100vh;
@@ -61,7 +61,8 @@
     }
 
     .card {
-      background: var(--card-bg);
+      background: rgba(255,255,255,0.92);
+      backdrop-filter: blur(6px);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
@@ -279,21 +280,18 @@
       <h3>Iqama Times (Toronto Time)</h3>
       <table id="timesTable"></table>
       <p class="last-updated" id="lastUpdated"></p>
-      <p class="muted">Update times in <code>config.js</code></p>
     </div>
 
     <!-- Aya of the Day -->
     <div class="card">
       <h3>Aya of the Day</h3>
       <div id="ayaBox" class="content-block"></div>
-      <p class="muted">Update in <code>config.js</code> &mdash; add date-specific entries or change the default.</p>
     </div>
 
     <!-- Hadith of the Day -->
     <div class="card">
       <h3>Hadith of the Day</h3>
       <div id="hadithBox" class="content-block"></div>
-      <p class="muted">Update in <code>config.js</code> &mdash; add date-specific entries or change the default.</p>
     </div>
 
     <footer>
