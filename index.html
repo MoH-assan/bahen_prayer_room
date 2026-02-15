@@ -36,7 +36,12 @@
 
     header {
       text-align: center;
-      padding: 32px 0 8px;
+      padding: 28px 24px 16px;
+      background: rgba(255,255,255,0.88);
+      backdrop-filter: blur(10px);
+      border-radius: var(--radius);
+      margin-bottom: 4px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.06);
     }
     header h1 {
       font-size: 1.6rem;
@@ -60,14 +65,26 @@
       border-bottom-style: solid;
     }
 
-    .card {
-      background: rgba(255,255,255,0.92);
+    .disclaimer {
+      text-align: center;
+      color: var(--muted);
+      font-size: 0.72rem;
+      margin-top: 24px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.8);
       backdrop-filter: blur(6px);
+      border-radius: 10px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: rgba(255,255,255,0.94);
+      backdrop-filter: blur(10px);
       border: 1px solid var(--border);
       border-radius: var(--radius);
       padding: 20px;
       margin: 16px 0;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
     }
 
     .card h3 {
@@ -248,7 +265,11 @@
       text-align: center;
       color: var(--muted);
       font-size: 0.8rem;
-      margin-top: 32px;
+      margin-top: 20px;
+      padding: 10px 16px;
+      background: rgba(255,255,255,0.8);
+      backdrop-filter: blur(6px);
+      border-radius: 10px;
     }
   </style>
 </head>
@@ -308,6 +329,11 @@
     <div class="card">
       <h3>Hadith of the Day</h3>
       <div id="hadithBox" class="content-block"></div>
+    </div>
+
+    <div class="disclaimer">
+      This page is <strong>not official</strong>. It is not affiliated with, endorsed by, or
+      representative of the MSA, the University of Toronto, or any official university body.
     </div>
 
     <footer>
