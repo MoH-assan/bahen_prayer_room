@@ -87,6 +87,14 @@ const CONFIG = {
   // Grace window (seconds) for late triggers due to tab throttling.
   lateGraceSeconds: 120,
 
+  // Automatic hard refresh for kiosk screens.
+  // Uses a cache-busting URL parameter (no manual Ctrl+Shift+R needed).
+  autoHardRefresh: {
+    enabled: true,
+    intervalMinutes: 60,
+    retryDelaySeconds: 15,
+  },
+
   testMode: {
     enabled: false,
     fajrAdhanOffsetSeconds: 30,

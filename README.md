@@ -75,6 +75,21 @@ Developer notes:
 - Keep this `false` in production.
 - In test mode, times are recalculated from the current moment on page load and when you tap `Enable Audio & Start`.
 
+### Auto Hard Refresh
+
+Useful for kiosk-style screens that stay open for long periods.
+
+```js
+autoHardRefresh: {
+  enabled: true,
+  intervalMinutes: 60,
+  retryDelaySeconds: 15,
+},
+```
+
+When enabled, the page auto-refreshes using a cache-busting URL parameter.  
+If adhan/iqama audio is currently playing, refresh waits and retries after `retryDelaySeconds`.
+
 ### Background Images
 
 ```js
@@ -116,6 +131,7 @@ GitHub Pages redeploys automatically in ~1 minute.
 - Skip button to stop audio early
 - Short notification toggle (persisted)
 - Test sound button
+- Optional auto hard refresh for kiosk displays
 - Daily aya and hadith
 - Direction photo slider with swipe support
 - Random background image

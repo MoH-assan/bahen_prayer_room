@@ -503,6 +503,14 @@
     const TEST_ENABLED    = TEST_MODE.enabled === true;
     const TEST_ADHAN_SEC  = Number.isFinite(TEST_MODE.fajrAdhanOffsetSeconds) ? TEST_MODE.fajrAdhanOffsetSeconds : 30;
     const TEST_IQAMA_SEC  = Number.isFinite(TEST_MODE.fajrIqamaOffsetSeconds) ? TEST_MODE.fajrIqamaOffsetSeconds : 45;
+    const HARD_REFRESH    = CONFIG.autoHardRefresh || {};
+    const HARD_REFRESH_ENABLED = HARD_REFRESH.enabled === true;
+    const HARD_REFRESH_INTERVAL_MIN = Number(HARD_REFRESH.intervalMinutes);
+    const HARD_REFRESH_RETRY_SEC = Number(HARD_REFRESH.retryDelaySeconds);
+    const AUTO_HARD_REFRESH_INTERVAL_MS =
+      (Number.isFinite(HARD_REFRESH_INTERVAL_MIN) && HARD_REFRESH_INTERVAL_MIN > 0 ? HARD_REFRESH_INTERVAL_MIN : 60) * 60 * 1000;
+    const AUTO_HARD_REFRESH_RETRY_MS =
+      (Number.isFinite(HARD_REFRESH_RETRY_SEC) && HARD_REFRESH_RETRY_SEC > 0 ? HARD_REFRESH_RETRY_SEC : 15) * 1000;
     const PRAYER_ORDER    = ["Fajr", "Dhuhr", "Asr", "Maghrib", "Isha"];
 
     let adhanTimes = {};
@@ -531,6 +539,7 @@
     let playingLabel = "";
     let stickyStatus = "";
     let stickyUntil = 0;
+    let hardRefreshTimerId = null;
 
     // ── Helpers ───────────────────────────────────────────────
     const now   = () => DateTime.now().setZone(ZONE);
@@ -549,6 +558,30 @@
 
     function formatClock(dt) {
       return dt.toFormat("HH:mm:ss");
+    }
+
+    function buildHardRefreshUrl() {
+      const url = new URL(window.location.href);
+      url.searchParams.set("_hr", String(Date.now()));
+      return url.toString();
+    }
+
+    function triggerAutoHardRefresh() {
+      if (!HARD_REFRESH_ENABLED) return;
+
+      // Avoid interrupting active adhan/iqama playback.
+      if (playingLabel && !audioEl.paused) {
+        scheduleAutoHardRefresh(AUTO_HARD_REFRESH_RETRY_MS);
+        return;
+      }
+
+      window.location.replace(buildHardRefreshUrl());
+    }
+
+    function scheduleAutoHardRefresh(delayMs = AUTO_HARD_REFRESH_INTERVAL_MS) {
+      if (!HARD_REFRESH_ENABLED) return;
+      if (hardRefreshTimerId) clearTimeout(hardRefreshTimerId);
+      hardRefreshTimerId = setTimeout(triggerAutoHardRefresh, delayMs);
     }
 
     function applyTestModeTimes() {
@@ -1013,6 +1046,7 @@
       buildTimesTable();
       if (CONFIG.lastUpdated) lastUpdEl.textContent = `Iqama times last updated: ${CONFIG.lastUpdated}`;
       updateUI();
+      scheduleAutoHardRefresh();
 
       if (localStorage.getItem("iqama_reminder_enabled") === "1") {
         start();
