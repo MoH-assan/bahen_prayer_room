@@ -22,10 +22,10 @@ Everything is configured in **`config.js`** — no need to edit `index.html`.
 lastUpdated: "2026-02-15",
 
 iqamaTimes: {
-  Fajr:  "06:30",
-  Dhuhr: "12:45",
-  Asr:   "15:30",
-  Isha:  "19:15",
+  Fajr:  "HH:MM", // Fajr iqama time in 24-hour format
+  Dhuhr: "HH:MM", // Dhuhr iqama time in 24-hour format
+  Asr:   "HH:MM", // Asr iqama time in 24-hour format
+  Isha:  "HH:MM", // Isha iqama time in 24-hour format
 },
 
 maghribOffsetMinutes: 5,
