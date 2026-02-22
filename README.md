@@ -33,6 +33,29 @@ maghribOffsetMinutes: 5,
 
 Maghrib iqama is auto-calculated (ISNA adhan time + 5 min). Update `lastUpdated` whenever you change times.
 
+### Iqama Note (Ramadan / MSA)
+
+```js
+iqamaNote: {
+  enabled: true,
+  title: "Ramadan Note (UofT MSA)",
+  message: [
+    "Isha and Taraweeh are held by MSA in Koffler Multifaith Centre throughout Ramadan.",
+    "Iqama is around 6:30 PM.",
+  ],
+  links: [
+    { label: "MSA Facebook", url: "https://www.facebook.com/uoftmsa/" },
+    { label: "MSA Instagram", url: "https://www.instagram.com/uoftmsa/" },
+  ],
+  post: {
+    url: "https://www.facebook.com/share/p/1D4tutoSCi/",
+    quote: ["Assalamualaykum ..."],
+  },
+},
+```
+
+Shown below the prayer times table. Set `enabled: false` to hide it.
+
 ### Daily Aya / Hadith
 
 ```js

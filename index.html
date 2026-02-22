@@ -260,6 +260,45 @@
     .bad        { color: var(--danger); font-weight: 700; }
     .muted      { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
     .last-updated { color: var(--muted); font-size: 0.78rem; margin-top: 4px; font-style: italic; }
+    .iqama-note {
+      margin-top: 10px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      border: 1px solid #ecd8a0;
+      background: #fff8e8;
+      color: #5b3f07;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .iqama-note.hidden { display: none; }
+    .iqama-note-title { font-weight: 700; margin-bottom: 6px; }
+    .iqama-note p { margin: 0 0 6px; }
+    .iqama-note p:last-child { margin-bottom: 0; }
+    .iqama-note-links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin: 6px 0;
+    }
+    .iqama-note-links a {
+      color: #5b3f07;
+      font-weight: 700;
+      text-decoration: underline;
+    }
+    .iqama-note-quote {
+      margin-top: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border-left: 3px solid #caa34b;
+      background: #fff2cf;
+    }
+    .iqama-note-quote a {
+      color: #5b3f07;
+      font-weight: 700;
+      display: inline-block;
+      margin-bottom: 6px;
+      text-decoration: underline;
+    }
 
     /* ── Content blocks (aya / hadith) ─────────────────────── */
     .content-block {
@@ -403,6 +442,7 @@
       </table>
       <p class="muted" id="adhanSource"></p>
       <p class="last-updated" id="lastUpdated"></p>
+      <div id="iqamaNote" class="iqama-note hidden"></div>
     </div>
 
     <!-- Facilities -->
@@ -496,6 +536,7 @@
     const AUDIO           = CONFIG.audio;
     const AYA             = CONFIG.dailyAya;
     const HADITH          = CONFIG.dailyHadith;
+    const IQAMA_NOTE      = CONFIG.iqamaNote || {};
     const GRACE_SEC       = CONFIG.lateGraceSeconds;
     const MAGHRIB_OFFSET  = CONFIG.maghribOffsetMinutes || 5;
     const API             = CONFIG.adhanApi || {};
@@ -526,6 +567,7 @@
     const timesBody   = $("timesBody");
     const lastUpdEl   = $("lastUpdated");
     const adhanSrcEl  = $("adhanSource");
+    const iqamaNoteEl = $("iqamaNote");
     const ayaBox      = $("ayaBox");
     const hadithBox   = $("hadithBox");
     const audioEl     = $("adhan");
@@ -708,6 +750,87 @@
       const had = HADITH[d] || HADITH["default"];
       ayaBox.innerHTML    = `<b>${aya.ref}</b><div>${aya.text}</div>`;
       hadithBox.innerHTML = `<b>${had.ref}</b><div>${had.text}</div>`;
+    }
+
+    function normalizedLines(lines) {
+      if (!Array.isArray(lines)) return [];
+      return lines
+        .map(line => (typeof line === "string" ? line.trim() : ""))
+        .filter(Boolean);
+    }
+
+    function renderIqamaNote() {
+      if (!iqamaNoteEl) return;
+
+      iqamaNoteEl.innerHTML = "";
+      if (IQAMA_NOTE.enabled !== true) {
+        iqamaNoteEl.classList.add("hidden");
+        return;
+      }
+
+      const post = IQAMA_NOTE.post || {};
+      const messageLines = normalizedLines(IQAMA_NOTE.message);
+      const quoteLines = normalizedLines(post.quote);
+      const hasTitle = typeof IQAMA_NOTE.title === "string" && IQAMA_NOTE.title.trim().length > 0;
+      const hasPostUrl = typeof post.url === "string" && post.url.trim().length > 0;
+      const noteLinks = Array.isArray(IQAMA_NOTE.links) ? IQAMA_NOTE.links : [];
+
+      if (!hasTitle && !messageLines.length && !noteLinks.length && !hasPostUrl && !quoteLines.length) {
+        iqamaNoteEl.classList.add("hidden");
+        return;
+      }
+
+      if (hasTitle) {
+        const titleEl = document.createElement("div");
+        titleEl.className = "iqama-note-title";
+        titleEl.textContent = IQAMA_NOTE.title.trim();
+        iqamaNoteEl.appendChild(titleEl);
+      }
+
+      messageLines.forEach(line => {
+        const p = document.createElement("p");
+        p.textContent = line;
+        iqamaNoteEl.appendChild(p);
+      });
+
+      if (noteLinks.length) {
+        const linksWrap = document.createElement("div");
+        linksWrap.className = "iqama-note-links";
+        noteLinks.forEach(link => {
+          if (!link || typeof link.url !== "string" || !link.url.trim()) return;
+          const a = document.createElement("a");
+          a.href = link.url.trim();
+          a.target = "_blank";
+          a.rel = "noopener";
+          a.textContent = typeof link.label === "string" && link.label.trim() ? link.label.trim() : link.url.trim();
+          linksWrap.appendChild(a);
+        });
+        if (linksWrap.childElementCount) iqamaNoteEl.appendChild(linksWrap);
+      }
+
+      if (hasPostUrl || quoteLines.length) {
+        const quoteWrap = document.createElement("div");
+        quoteWrap.className = "iqama-note-quote";
+
+        if (hasPostUrl) {
+          const sourceLink = document.createElement("a");
+          sourceLink.href = post.url.trim();
+          sourceLink.target = "_blank";
+          sourceLink.rel = "noopener";
+          sourceLink.textContent = "Quoted from MSA post";
+          quoteWrap.appendChild(sourceLink);
+        }
+
+        quoteLines.forEach(line => {
+          const p = document.createElement("p");
+          p.textContent = line;
+          quoteWrap.appendChild(p);
+        });
+
+        iqamaNoteEl.appendChild(quoteWrap);
+      }
+
+      iqamaNoteEl.classList.remove("hidden");
     }
 
     // ── Audio ─────────────────────────────────────────────────
@@ -1044,6 +1167,7 @@
       setDailyContent();
       await fetchAdhanTimes();
       buildTimesTable();
+      renderIqamaNote();
       if (CONFIG.lastUpdated) lastUpdEl.textContent = `Iqama times last updated: ${CONFIG.lastUpdated}`;
       updateUI();
       scheduleAutoHardRefresh();

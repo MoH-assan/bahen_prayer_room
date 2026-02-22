@@ -30,7 +30,7 @@ const CONFIG = {
   // ── Iqama Times (24-hour HH:MM) ──────────────────────────
   // Maghrib is AUTO-CALCULATED: adhan time + maghribOffsetMinutes.
   iqamaTimes: {
-    Fajr:  "6:30",
+    Fajr:  "6:15",
     Dhuhr: "12:45",
     Asr:   "15:45",
     Isha:  "19:30",
@@ -38,6 +38,33 @@ const CONFIG = {
 
   // Minutes after Maghrib adhan for Maghrib iqama
   maghribOffsetMinutes: 5,
+
+  // Ramadan / community note shown under the prayer-times table.
+  iqamaNote: {
+    enabled: true,
+    title: "Ramadan Note (UofT MSA)",
+    message: [
+      "Isha and Taraweeh are held by MSA in Koffler Multifaith Centre throughout Ramadan.",
+      "Iqama is around 6:30 PM.",
+      "For more information, check MSA:",
+    ],
+    links: [
+      { label: "MSA Facebook", url: "https://www.facebook.com/uoftmsa/" },
+      { label: "MSA Instagram", url: "https://www.instagram.com/uoftmsa/" },
+      { label: "MSA Contact", url: "https://www.uoftmsa.com/contact-us.html" },
+    ],
+    post: {
+      url: "https://www.facebook.com/share/p/1D4tutoSCi/",
+      quote: [
+        "Assalamualaykum wa Rahmatullahi wa Barakatuhu. Join us for Taraweeh on campus starting February 17th, in sha Allah!",
+        "May Allah SWT grant us sincerity in our worship, accept from us, and forgive us of all our shortcomings. May this be a blessed Ramadan for all of us.",
+        "\u0627\u064e\u0644\u0644\u0651\u0647\u064f\u0645\u064e \u0628\u064e\u0644\u0651\u0650\u063a\u0652\u0646\u064e\u0627 \u0631\u064e\u0645\u064e\u0636\u064e\u0627\u0646",
+        "Allahumma ballighna Ramadan.",
+        "Oh Allah, let us reach the month of Ramadan.",
+        "BarakAllahu feekum.",
+      ],
+    },
+  },
 
   // ── Audio ─────────────────────────────────────────────────
   // "adhan" for full adhan, "iqama" for iqama, "short" for brief notification.
