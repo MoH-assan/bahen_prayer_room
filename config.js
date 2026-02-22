@@ -11,7 +11,7 @@ const CONFIG = {
 
   // ── Last Updated ──────────────────────────────────────────
   // Change this date whenever you update iqama times.
-  lastUpdated: "2026-02-15",
+  lastUpdated: "2026-02-22",
 
   // ── Location ──────────────────────────────────────────────
   location: {

@@ -260,6 +260,11 @@
     .bad        { color: var(--danger); font-weight: 700; }
     .muted      { color: var(--muted); font-size: 0.82rem; margin-top: 8px; }
     .last-updated { color: var(--muted); font-size: 0.78rem; margin-top: 4px; font-style: italic; }
+    .isha-note-indicator {
+      color: #c78500;
+      font-weight: 800;
+      margin-left: 4px;
+    }
     .iqama-note {
       margin-top: 10px;
       padding: 12px 14px;
@@ -377,7 +382,7 @@
 
     <!-- Header -->
     <header class="glass">
-      <h1>Bahen Prayer Room</h1>
+      <h1>Bahen Prayer Room ✨🕌📿⭐️</h1>
       <div class="subtitle">Iqama Reminder &middot; Toronto</div>
       <a id="locationLink" class="location-link" target="_blank" rel="noopener"></a>
     </header>
@@ -731,9 +736,13 @@
     // ── Build UI ──────────────────────────────────────────────
     function buildTimesTable() {
       timesBody.innerHTML = "";
+      const showIshaNoteMarker = IQAMA_NOTE.enabled === true;
       PRAYER_ORDER.forEach(name => {
         const tr = document.createElement("tr");
-        tr.innerHTML = `<td>${name}</td><td>${adhanTimes[name] || "—"}</td><td>${IQAMA_TIMES[name] || "—"}</td>`;
+        const prayerLabel = name === "Isha" && showIshaNoteMarker
+          ? `${name}<span class="isha-note-indicator" title="See note below">★</span>`
+          : name;
+        tr.innerHTML = `<td>${prayerLabel}</td><td>${adhanTimes[name] || "—"}</td><td>${IQAMA_TIMES[name] || "—"}</td>`;
         timesBody.appendChild(tr);
       });
     }
@@ -1183,3 +1192,4 @@
   </script>
 </body>
 </html>
+
