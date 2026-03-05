@@ -30,10 +30,10 @@ const CONFIG = {
   // ── Iqama Times (24-hour HH:MM) ──────────────────────────
   // Maghrib is AUTO-CALCULATED: adhan time + maghribOffsetMinutes.
   iqamaTimes: {
-    Fajr:  "6:15",
+    Fajr:  "6:00",
     Dhuhr: "12:45",
     Asr:   "15:45",
-    Isha:  "19:30",
+    Isha:  "19:40",
   },
 
   // Minutes after Maghrib adhan for Maghrib iqama
@@ -45,7 +45,8 @@ const CONFIG = {
     title: "Ramadan Note (UofT MSA)",
     message: [
       "Isha and Taraweeh are held by MSA in Koffler Multifaith Centre throughout Ramadan.",
-      "Iqama is around 6:30 PM.",
+      "Iqama is around 7:35 PM.",
+      "Prayer total duration is around 1 hour and 30 minutes.",
       "For more information, check MSA:",
     ],
     links: [
