@@ -45,7 +45,6 @@ const CONFIG = {
     title: "Ramadan Note (UofT MSA)",
     message: [
       "Isha and Taraweeh are held by MSA in Koffler Multifaith Centre throughout Ramadan.",
-      "Iqama is around 7:35 PM.",
       "Prayer total duration is around 1 hour and 30 minutes.",
       "For more information, check MSA:",
     ],
