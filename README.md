@@ -150,6 +150,7 @@ GitHub Pages redeploys automatically in ~1 minute.
 
 - ISNA adhan times fetched daily from [AlAdhan.com](https://aladhan.com)
 - Maghrib iqama auto-calculated (sunset + 5 min)
+- Separate countdowns for the next adhan and next iqama
 - Full iqama or short notification audio
 - Skip button to stop audio early
 - Short notification toggle (persisted)
