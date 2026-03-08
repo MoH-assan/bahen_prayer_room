@@ -239,6 +239,14 @@
       gap: 10px;
       margin-bottom: 14px;
     }
+    .countdown-prayer {
+      text-align: center;
+      font-size: 1.25rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: var(--accent);
+      margin-bottom: 10px;
+    }
     .countdown {
       text-align: center; padding: 16px; border-radius: 12px;
       transition: background 0.5s, color 0.5s;
@@ -446,6 +454,7 @@
       <p class="muted" id="currentTime" style="margin-bottom:10px;font-weight:600;"></p>
 
       <!-- Countdown to next adhan and iqama -->
+      <div class="countdown-prayer" id="countdownPrayerName">--</div>
       <div class="countdown-stack">
         <div class="countdown" id="adhanCountdownBox">
           <div class="countdown-label" id="adhanCountdownLabel">Next Adhan</div>
@@ -973,6 +982,7 @@
     const adhanCountdownBox   = $("adhanCountdownBox");
     const adhanCountdownLabel = $("adhanCountdownLabel");
     const adhanCountdownTimer = $("adhanCountdownTimer");
+    const countdownPrayerName = $("countdownPrayerName");
     const countdownBox        = $("countdownBox");
     const countdownLabel      = $("countdownLabel");
     const countdownTimer      = $("countdownTimer");
@@ -1024,9 +1034,29 @@
       else                       boxEl.classList.add("far");
     }
 
+    function renderCountdownPrayerName(nextAdhan, nextIqama) {
+      if (!countdownPrayerName) return;
+
+      if (!nextAdhan && !nextIqama) {
+        countdownPrayerName.textContent = "--";
+        return;
+      }
+
+      if (nextAdhan && nextIqama && nextAdhan.name !== nextIqama.name) {
+        countdownPrayerName.textContent = `${nextAdhan.name} Adhan • ${nextIqama.name} Iqama`;
+        return;
+      }
+
+      countdownPrayerName.textContent = (nextAdhan || nextIqama).name;
+    }
+
     function updateCountdowns() {
-      renderCountdown(adhanCountdownBox, adhanCountdownLabel, adhanCountdownTimer, "Adhan", getNextScheduledPrayer(adhanTimes));
-      renderCountdown(countdownBox, countdownLabel, countdownTimer, "Iqama", getNextScheduledPrayer(IQAMA_TIMES));
+      const nextAdhan = getNextScheduledPrayer(adhanTimes);
+      const nextIqama = getNextScheduledPrayer(IQAMA_TIMES);
+
+      renderCountdownPrayerName(nextAdhan, nextIqama);
+      renderCountdown(adhanCountdownBox, adhanCountdownLabel, adhanCountdownTimer, "Adhan", nextAdhan);
+      renderCountdown(countdownBox, countdownLabel, countdownTimer, "Iqama", nextIqama);
     }
 
     // Tick every second for clock + countdowns
