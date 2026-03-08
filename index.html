@@ -233,7 +233,12 @@
     #snoozeBar .snooze-text   { flex: 1; font-weight: 600; font-size: 0.95rem; min-width: 120px; }
 
     /* ── Countdown ──────────────────────────────────────────── */
-    .countdown-stack { display: grid; gap: 10px; margin-bottom: 14px; }
+    .countdown-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 14px;
+    }
     .countdown {
       text-align: center; padding: 16px; border-radius: 12px;
       transition: background 0.5s, color 0.5s;
@@ -246,6 +251,10 @@
     .countdown.soon    { background: #ffebee; color: #b71c1c; }   /* < 10 min — red */
     .countdown.now     { background: #b71c1c; color: #fff; animation: pulse 1s infinite; }
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.7; } }
+
+    @media (max-width: 560px) {
+      .countdown-stack { grid-template-columns: 1fr; }
+    }
 
     /* ── Table ──────────────────────────────────────────────── */
     table        { width: 100%; border-collapse: collapse; }
@@ -1006,7 +1015,7 @@
       const ss = String(totalSec % 60).padStart(2, "0");
       const totalMin = totalSec / 60;
 
-      labelEl.textContent = `Next ${prefix}: ${next.name} at ${next.dt.toFormat("h:mm a")}`;
+      labelEl.textContent = `Next ${prefix} at ${next.dt.toFormat("h:mm a")}`;
       timerEl.textContent = `${hh}:${mm}:${ss}`;
 
       if (totalSec <= 0)         boxEl.classList.add("now");
