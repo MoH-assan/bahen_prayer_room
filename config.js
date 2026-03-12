@@ -30,7 +30,7 @@ const CONFIG = {
   // ── Iqama Times (24-hour HH:MM) ──────────────────────────
   // Maghrib is AUTO-CALCULATED: adhan time + maghribOffsetMinutes.
   iqamaTimes: {
-    Fajr:  "6:45",
+    Fajr:  "6:30",
     Dhuhr: "13:45",
     Asr:   "17:00",
     Isha:  "20:45",
