@@ -32,7 +32,7 @@ const CONFIG = {
   iqamaTimes: {
     Fajr:  "6:30",
     Dhuhr: "13:45",
-    Asr:   "17:00",
+    Asr:   "17:10",
     Isha:  "20:45",
   },
 
