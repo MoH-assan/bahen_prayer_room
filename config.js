@@ -33,7 +33,7 @@ const CONFIG = {
     Fajr:  "6:30",
     Dhuhr: "13:45",
     Asr:   "17:10",
-    Isha:  "20:45",
+    Isha:  "09:00",
   },
 
   // Minutes after Maghrib adhan for Maghrib iqama
