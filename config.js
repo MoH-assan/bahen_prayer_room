@@ -11,7 +11,7 @@ const CONFIG = {
 
   // ── Last Updated ──────────────────────────────────────────
   // Change this date whenever you update iqama times.
-  lastUpdated: "2026-03-26",
+  lastUpdated: "2026-04-08",
 
   // ── Location ──────────────────────────────────────────────
   location: {
@@ -30,10 +30,10 @@ const CONFIG = {
   // ── Iqama Times (24-hour HH:MM) ──────────────────────────
   // Maghrib is AUTO-CALCULATED: adhan time + maghribOffsetMinutes.
   iqamaTimes: {
-    Fajr:  "6:15",
+    Fajr:  "5:45",
     Dhuhr: "13:45",
     Asr:   "17:15",
-    Isha:  "21:15",
+    Isha:  "21:30",
   },
 
   // Minutes after Maghrib adhan for Maghrib iqama
